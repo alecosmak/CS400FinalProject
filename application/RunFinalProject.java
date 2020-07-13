@@ -18,26 +18,47 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Optional;
+import java.util.Scanner;
 import javafx.application.Application;
 import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.value.ObservableValue;
-import javafx.collections.ObservableList;
-import javafx.stage.FileChooser;
-import javafx.stage.Stage;
-import javafx.util.Callback;
-import javafx.scene.Node;
+import javafx.geometry.HPos;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.scene.control.*;
+import javafx.scene.chart.XYChart.Data;
+import javafx.scene.chart.XYChart.Series;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
-import javafx.scene.layout.*;
-import javafx.scene.text.Text;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar.ButtonData;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.Label;
+import javafx.scene.control.RadioButton;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TabPane.TabClosingPolicy;
-import javafx.scene.control.TableColumn.CellDataFeatures;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.Region;
+import javafx.scene.layout.VBox;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 
 /**
  * 
@@ -49,61 +70,110 @@ public class RunFinalProject extends Application {
    private ArrayList<YearData> yearList;
    private Stage mainStage;
    private File inputFile;
+   private Font header = new Font(14);
 
 
-   private void addFile(File file) {
 
-   }
+   private void addYear(File file) {
+      if (yearList == null)
+         yearList = new ArrayList<YearData>();
 
-
-   private void addYear() {
-
+      yearList.add(new YearData(file));
    }
 
 
    private YearData getYear(int year) {
-      return yearList.get(year);
+      for (YearData yearData : yearList) {
+         if (yearData.getYear() == year)
+            return yearData;
+      }
+
+      return null;
    }
 
 
    /**
+    * Creates the pane for the Home tab. This pane contains all the information
+    * and controls for that tab.
     * 
-    * 
-    * @return
+    * @return The pane for the home tab.
     */
-   private Node createHomePane() {
+   private Pane createHomePane() {
+      BorderPane homePane = new BorderPane();
 
-      Text homeText = new Text(
-            "Welcome! Please select a tab to access milk weight data.");
-      VBox pane = new VBox(homeText);
+      // the text to display on the home tab
+      String homeString = "Welcome to the Milk Weights GUI!  Please select a "
+            + "tab to access milk weight data.\n - Tables displays a data table"
+            + " of all current data\n - Charts shows a chart of weight sold for"
+            + " each day\n - Input Files allows you to add more data from a CSV"
+            + " file\n - Reports shows general weight summaries";
 
-      FileInputStream input;
+      // adds and formats the text for the pane
+      Text homeText = new Text(homeString);
+      homeText.setFont(new Font(18));
+      homePane.setCenter(homeText);
+      BorderPane.setAlignment(homeText, Pos.CENTER);
 
-      try {
-         input = new FileInputStream("cheeseLogo.jpg");
-         Image image = new Image(input, Region.USE_PREF_SIZE, 200, true, true);
+      // vbox for the bottom elements
+      VBox bottom = new VBox();
+      bottom.setAlignment(Pos.CENTER);
+      bottom.setPadding(new Insets(0, 0, 2, 0));
+
+
+      try { // tries to load in an image to the home tab
+         FileInputStream inputImage = new FileInputStream("cheeseLogo.jpg");
+         Image image =
+               new Image(inputImage, Region.USE_PREF_SIZE, 200, true, true);
          ImageView imageView = new ImageView(image);
-         pane.getChildren().add(imageView);
+         bottom.getChildren().add(imageView);
+
       } catch (FileNotFoundException e) {
+         // popup window for if the home page image cannot be found
          Alert alert = new Alert(AlertType.INFORMATION,
                "Home image could not be found. Everything else will still "
                      + "function correctly.");
-         alert.setResizable(true);
          alert.setHeaderText("Problem Loading");
-         alert.getDialogPane().setMinHeight(Region.USE_PREF_SIZE);
+         alert.getDialogPane().setMinSize(Region.USE_PREF_SIZE,
+               Region.USE_PREF_SIZE);
          alert.showAndWait();
       }
 
-      return pane;
+      Text infoText = new Text("Designed by Alec Osmak for a final project.  "
+            + "UW-Madison CS400 Summer 2020");
+      bottom.getChildren().add(infoText);
+      homePane.setBottom(bottom);
+
+      return homePane;
    }
 
 
+   private TableView createTable() {
+      
+      TableView<FarmDay> table = new TableView<>();
+
+
+      TableColumn<FarmDay, Integer> dateCol = new TableColumn<>("Date");
+      TableColumn<FarmDay, String> farmCol = new TableColumn<>("Farm ID");
+      TableColumn<FarmDay, Integer> weightCol = new TableColumn<>("Weight");
+
+      farmCol.setCellValueFactory(
+            p -> new ReadOnlyObjectWrapper<>(p.getValue().getFarmID()));
+
+      table.getColumns().addAll(dateCol, farmCol, weightCol);
+      
+      
+      return table;
+   }
+   
+   
    /**
+    * Creates the pane for the Tables tab. This pane contains all the
+    * information and controls for that tab.
     * 
-    * 
-    * @return
+    * @return The pane for the Tables tab.
     */
-   private Node createTablesPane() {
+   @SuppressWarnings("unchecked")
+   private Pane createTablesPane() {
       GridPane topOptions = new GridPane();
 
       // creates labels for options
@@ -135,17 +205,7 @@ public class RunFinalProject extends Application {
       topOptions.addRow(1, farms, years, months);
 
 
-      TableView<FarmDay> table = new TableView<>();
-
-
-      TableColumn<FarmDay, Integer> dateCol = new TableColumn<>("Date");
-      TableColumn<FarmDay, String> farmCol = new TableColumn<>("Farm ID");
-      TableColumn<FarmDay, Integer> weightCol = new TableColumn<>("Weight");
-
-      farmCol.setCellValueFactory(
-            p -> new ReadOnlyObjectWrapper<>(p.getValue().getFarmID()));
-
-      table.getColumns().addAll(dateCol, farmCol, weightCol);
+      
 
 
       VBox rightOptions = new VBox();
@@ -163,9 +223,11 @@ public class RunFinalProject extends Application {
       rightOptions.getChildren().addAll(downloadButton, editLabel, onButton,
             offButton);
 
-      BorderPane pane =
-            new BorderPane(table, topOptions, rightOptions, null, null);
-      return pane;
+      BorderPane tablesPane =
+            new BorderPane(createTable(), topOptions, rightOptions, null, null);
+      tablesPane.setPadding(new Insets(10, 10, 10, 10));
+
+      return tablesPane;
    }
 
 
@@ -174,147 +236,276 @@ public class RunFinalProject extends Application {
     * 
     * @return
     */
-   private Node createGraphsPane() {
+   private LineChart<Number, Number> createChart() {
       NumberAxis xAxis = new NumberAxis();
       xAxis.setLabel("Day");
 
       NumberAxis yAxis = new NumberAxis();
       yAxis.setLabel("Weight");
-      LineChart chart = new LineChart(xAxis, yAxis);
-      XYChart.Series dataSeries1 = new XYChart.Series();
-      dataSeries1.setName("2014");
 
-      dataSeries1.getData().add(new XYChart.Data( 1, 567));
-      dataSeries1.getData().add(new XYChart.Data( 5, 612));
-      dataSeries1.getData().add(new XYChart.Data(10, 800));
-      dataSeries1.getData().add(new XYChart.Data(20, 780));
-      dataSeries1.getData().add(new XYChart.Data(40, 810));
-      dataSeries1.getData().add(new XYChart.Data(80, 850));
+      LineChart<Number, Number> chart = new LineChart<>(xAxis, yAxis);
 
-      chart.getData().add(dataSeries1);
-      
-      ComboBox<String> years = new ComboBox<>();
-      years.setEditable(true);
-      years.getItems().addAll("2019", "2020");
+      Series<Number, Number> series = new XYChart.Series<>();
+      series.setName("2014");
 
-      ComboBox<String> months = new ComboBox<>();
-      months.setEditable(true);
-      months.getItems().addAll("jan", "feb");
 
-      HBox topOptions = new HBox(years, months);
+      series.getData().add(new Data<Number, Number>(1, 567));
+      series.getData().add(new Data<Number, Number>(5, 612));
+      series.getData().add(new Data<Number, Number>(10, 800));
+      series.getData().add(new Data<Number, Number>(20, 780));
+      series.getData().add(new Data<Number, Number>(40, 810));
+      series.getData().add(new Data<Number, Number>(80, 850));
 
-      Label farms = new Label("Farm IDs:");
+      chart.getData().add(series);
 
-      VBox rightOptions = new VBox(farms);
-      for (int i = 0; i < 4; i++) {
-         rightOptions.getChildren().add(new CheckBox("Farm " + i));
-      }
+      return chart;
+   }
 
-      BorderPane pane =
-            new BorderPane(chart, topOptions, rightOptions, null, null);
-      return pane;
+
+   private void addSeries(String farmID) {
+      System.out.println(farmID);
    }
 
 
    /**
+    * Creates the pane for the Charts tab. This pane contains all the
+    * information and controls for that tab.
     * 
-    * 
-    * @return
+    * @return The pane for the Charts tab.
     */
-   private Node createInputFilesPane() {
+   private Pane createChartsPane() {
+      // Label and ComboBox for year input
+      Label yearLabel = new Label("Year:");
+      yearLabel.setFont(header);
+      ComboBox<String> years = new ComboBox<>();
+      years.setEditable(true);
+      years.getItems().addAll("2019", "2020");
+      HBox yearBox = new HBox(yearLabel, years);
+      yearBox.setSpacing(5);
 
-      Button fileButton = new Button("Select File");
+      // Label and ComboBox for month input
+      Label monthLabel = new Label("Month:");
+      monthLabel.setFont(header);
+      ComboBox<String> months = new ComboBox<>();
+      months.setEditable(true);
+      months.getItems().addAll("jan", "feb");
+      HBox monthBox = new HBox(monthLabel, months);
+      monthBox.setSpacing(5);
+
+      HBox topOptions = new HBox(yearBox, monthBox);
+      topOptions.setSpacing(20);
+
+      // Label and CheckBoxes for farm input
+      Label farms = new Label("Farm IDs:");
+      farms.setFont(header);
+      VBox rightOptions = new VBox(farms);
+      for (int i = 0; i < 4; i++) {
+         CheckBox box = new CheckBox("Farm " + i);
+         rightOptions.getChildren().add(box);
+         box.setOnAction(a -> {
+            if (box.isSelected())
+               addSeries(box.getText());
+         });
+      }
+
+      // if (yearList.size()!=0) {
+      // for (YearData year : yearList) {
+      // if (year.getNumMonths() != 0) {
+      // for (MonthData month : year.getMonthList()) {
+      // if (month.getNumFarms() != 0) {
+      // for (FarmMonth farm : month.getFarmList()) {
+      // rightOptions.getChildren()
+      // .add(new CheckBox(farm.getFarmID()));}}}}}}
+
+      rightOptions.setSpacing(5);
+
+      BorderPane chartsPane =
+            new BorderPane(createChart(), topOptions, rightOptions, null, null);
+      chartsPane.setPadding(new Insets(10, 10, 10, 10));
+
+      return chartsPane;
+   }
+
+
+   private void addFile(File file) {
+      String name = file.getName();
+      name = name.substring(0, name.lastIndexOf(".")); // removes .csv
+
+      String[] splitName = name.split("-");
+      // gets the year and month from the title of the file
+      int year = Integer.parseInt(splitName[0]);
+      Months month = Months.values()[Integer.parseInt(splitName[1])];
+
+
+      if (yearList == null) {
+         addYear(file);
+
+      } else {
+         YearData yearData = getYear(year);
+
+         if (yearData == null) {
+            addYear(file);
+
+         } else {
+            if (yearData.getMonthData(month) == null) {
+               yearData.addMonthData(file);
+
+            } else {
+
+               // Alert alert = new Alert(AlertType.CONFIRMATION,
+               // "Month information already exist. Would you like to
+               // overwrite?");
+               // alert.getDialogPane().setMinSize(Region.USE_PREF_SIZE,
+               // Region.USE_PREF_SIZE);
+               //
+               // ButtonType yesButton = new ButtonType("Yes");
+               // ButtonType noButton =
+               // new ButtonType("No", ButtonData.CANCEL_CLOSE);
+               //
+               // alert.getButtonTypes().setAll(yesButton, noButton);
+               //
+               // Optional<ButtonType> result = alert.showAndWait();
+               //
+               // if (result.get() == yesButton)
+               // yearData.addMonthData(file);
+
+
+            }
+         }
+      }
+   }
+
+
+   /**
+    * Creates the pane for the Input Files tab. This pane contains all the
+    * information and controls for that tab.
+    * 
+    * @return The pane for the Input Files tab.
+    */
+   private Pane createInputFilesPane() {
+      // creates a FileChooser for selecting a file with the OS's file manager
       FileChooser fileChooser = new FileChooser();
-      fileChooser.setTitle("Select File");
+      fileChooser.setTitle("Select CSV File");
       fileChooser.getExtensionFilters()
             .addAll(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
 
       Label fileLabel = new Label("Selected File: ");
+      fileLabel.setFont(header);
       TextField fileField = new TextField();
       fileField.setEditable(false);
 
-      Button saveButton = new Button("Save File");
-
+      // a button that opens the FileChooser dialog
+      Button fileButton = new Button("Select File");
       fileButton.setOnAction(a -> {
          inputFile = fileChooser.showOpenDialog(mainStage);
          if (inputFile != null)
             fileField.setText(inputFile.getName());
       });
 
+      // a button that saves the file to the data structure
+      Button saveButton = new Button("Save File");
       saveButton.setOnAction(a -> {
          if (inputFile != null) {
             addFile(inputFile);
-            fileField.setText(null);
+            inputFile = null;
+            fileField.setText("File Saved");
          }
       });
 
       HBox bottom = new HBox(fileLabel, fileField, saveButton);
+      bottom.setSpacing(10);
 
-      VBox pane = new VBox(fileButton, bottom);
-      return pane;
+      VBox filesPane = new VBox(fileButton, bottom);
+      filesPane.setSpacing(10);
+      filesPane.setPadding(new Insets(25, 0, 0, 25));
+
+      return filesPane;
    }
 
 
    /**
+    * Creates the pane for the Reports tab. This pane contains all the
+    * information and controls for that tab.
     * 
-    * 
-    * @return
+    * @return The pane for the Reports tab.
     */
-   private Node createReportsPane() {
+   private Pane createReportsPane() {
+      GridPane reportsPane = new GridPane();
+      double controlWidth = 100;
 
+      // creating and formatting all ComboBoxes
       ComboBox<String> farms = new ComboBox<>();
       farms.setEditable(true);
+      farms.setPrefWidth(controlWidth + 10);
       farms.getItems().addAll("farm 1", "farm 2");
-
-      Label farmTotalLabel = new Label("Farm Total:");
-      Label farmPercentLabel = new Label("Farm Percent:");
-
-      TextField farmTotalField = new TextField();
-      farmTotalField.setEditable(false);
-      TextField farmPercentField = new TextField();
-      farmPercentField.setEditable(false);
-
-      HBox farmData = new HBox(farms, farmTotalLabel, farmTotalField,
-            farmPercentLabel, farmPercentField);
-
 
       ComboBox<String> years = new ComboBox<>();
       years.setEditable(true);
+      years.setPrefWidth(controlWidth + 10);
       years.getItems().addAll("2019", "2020");
-
-      Label yearTotalLabel = new Label("Year Total:");
-      Label yearPercentLabel = new Label("Year Percent:");
-
-      TextField yearTotalField = new TextField();
-      yearTotalField.setEditable(false);
-      TextField yearPercentField = new TextField();
-      yearPercentField.setEditable(false);
-      HBox yearData = new HBox(years, yearTotalLabel, yearTotalField,
-            yearPercentLabel, yearPercentField);
-
 
       ComboBox<String> months = new ComboBox<>();
       months.setEditable(true);
+      months.setPrefWidth(controlWidth + 10);
       months.getItems().addAll("jan", "feb");
 
-      Label monthTotalLabel = new Label("Month Total:");
-      Label monthPercentLabel = new Label("Month Percent:");
+      // creating and formatting all Labels
+      Label reportLabel = new Label("Report");
+      reportLabel.setFont(header);
+      Label selectLabel = new Label("Select");
+      selectLabel.setFont(header);
+      Label totalLabel = new Label("Total Weight");
+      totalLabel.setFont(header);
+      Label percentLabel = new Label("Percent of total");
+      percentLabel.setFont(header);
+
+      Label farmLabel = new Label("Farm:");
+      Label yearLabel = new Label("Year:");
+      Label monthLabel = new Label("Month:");
+
+      // creating and formatting all TextFields
+      TextField farmTotalField = new TextField();
+      farmTotalField.setEditable(false);
+      farmTotalField.setPrefWidth(controlWidth);
+      TextField farmPercentField = new TextField();
+      farmPercentField.setEditable(false);
+      farmPercentField.setPrefWidth(controlWidth);
+
+      TextField yearTotalField = new TextField();
+      yearTotalField.setEditable(false);
+      yearTotalField.setPrefWidth(controlWidth);
+      TextField yearPercentField = new TextField();
+      yearPercentField.setEditable(false);
+      yearPercentField.setPrefWidth(controlWidth);
 
       TextField monthTotalField = new TextField();
+      monthTotalField.setPrefWidth(controlWidth);
       monthTotalField.setEditable(false);
       TextField monthPercentField = new TextField();
       monthPercentField.setEditable(false);
-      HBox monthData = new HBox(months, monthTotalLabel, monthTotalField,
-            monthPercentLabel, monthPercentField);
+      monthPercentField.setPrefWidth(controlWidth);
 
+      // adding controls to GridPane
+      reportsPane.addRow(0, reportLabel, selectLabel, totalLabel, percentLabel);
+      reportsPane.addRow(1, farmLabel, farms, farmTotalField, farmPercentField);
+      reportsPane.addRow(2, yearLabel, years, yearTotalField, yearPercentField);
+      reportsPane.addRow(3, monthLabel, months, monthTotalField,
+            monthPercentField);
 
-      VBox pane = new VBox(farmData, yearData, monthData);
-      return pane;
+      // formatting GridPane
+      GridPane.setHalignment(selectLabel, HPos.CENTER);
+      GridPane.setHalignment(totalLabel, HPos.CENTER);
+      GridPane.setHalignment(percentLabel, HPos.CENTER);
+      reportsPane.setPadding(new Insets(20, 10, 10, 10));
+      reportsPane.setHgap(15);
+      reportsPane.setVgap(10);
+
+      return reportsPane;
    }
 
 
    /**
-    * 
+    * Creates the GUI and displays it to the user.
     * 
     * @param pStage The primary stage to display the GUI window.
     */
@@ -325,23 +516,23 @@ public class RunFinalProject extends Application {
       // creates all the tabs
       Tab homeTab = new Tab("Home");
       Tab tablesTab = new Tab("Tables");
-      Tab graphsTab = new Tab("Graphs");
+      Tab chartsTab = new Tab("Charts");
       Tab inputFilesTab = new Tab("Input Files");
       Tab reportsTab = new Tab("Reports");
 
-      // adds the elements to each tab
+      // adds the panes to each tab
       homeTab.setContent(createHomePane());
       tablesTab.setContent(createTablesPane());
-      graphsTab.setContent(createGraphsPane());
+      chartsTab.setContent(createChartsPane());
       inputFilesTab.setContent(createInputFilesPane());
       reportsTab.setContent(createReportsPane());
 
-      // adds the individual tabs to a TabPane
-      TabPane tabPane = new TabPane(homeTab, tablesTab, graphsTab,
+      // adds the individual tabs to the TabPane
+      TabPane tabPane = new TabPane(homeTab, tablesTab, chartsTab,
             inputFilesTab, reportsTab);
       tabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
 
-      // formats stage and shows it to the user
+      // formats the stage and shows it to the user
       Scene scene = new Scene(tabPane);
       mainStage.setScene(scene);
       mainStage.setTitle("Milk Weights GUI");
@@ -350,9 +541,9 @@ public class RunFinalProject extends Application {
 
 
    /**
+    * Starts the program.
     * 
-    * 
-    * @param args
+    * @param args The general arguments when running the program.
     */
    public static void main(String[] args) {
       launch(args);

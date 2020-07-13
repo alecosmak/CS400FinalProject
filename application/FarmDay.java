@@ -2,20 +2,22 @@ package application;
 
 public class FarmDay {
 
-   private int date;
+   private int day;
    private int weight;
    private String farmID;
    
-   public int getDate() {
-      return date;
+   public String getFarmID() {
+      return farmID;
+   }
+   
+   public int getDay() {
+      return day;
    }
    
    public int getWeight() {
       return weight;
    }
    
-   public String getFarmID() {
-      return farmID;
-   }
+   
    
 }
