@@ -17,11 +17,10 @@ package application;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
 import java.util.Optional;
-import java.util.Scanner;
 import javafx.application.Application;
-import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -29,8 +28,6 @@ import javafx.scene.Scene;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.scene.chart.XYChart.Data;
-import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
@@ -47,6 +44,7 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
@@ -67,18 +65,20 @@ import javafx.stage.Stage;
  */
 public class RunFinalProject extends Application {
 
-   private ArrayList<YearData> yearList;
+   private ObservableList<YearData> yearList;
    private Stage mainStage;
    private File inputFile;
    private Font header = new Font(14);
+   private TableView<DayData> table;
+   private LineChart<Number, Number> chart;
+   private VBox rightOptions;
 
 
-
-   private void addYear(File file) {
+   private void addYear(File file, int year) {
       if (yearList == null)
-         yearList = new ArrayList<YearData>();
+         yearList = FXCollections.observableArrayList();
 
-      yearList.add(new YearData(file));
+      yearList.add(new YearData(file, year));
    }
 
 
@@ -147,32 +147,31 @@ public class RunFinalProject extends Application {
    }
 
 
-   private TableView createTable() {
-      
-      TableView<FarmDay> table = new TableView<>();
+   @SuppressWarnings("unchecked")
+   private TableView<DayData> createTable() {
 
+      table = new TableView<>();
 
-      TableColumn<FarmDay, Integer> dateCol = new TableColumn<>("Date");
-      TableColumn<FarmDay, String> farmCol = new TableColumn<>("Farm ID");
-      TableColumn<FarmDay, Integer> weightCol = new TableColumn<>("Weight");
+      TableColumn<DayData, Integer> dateCol = new TableColumn<>("Date");
+      TableColumn<DayData, String> farmCol = new TableColumn<>("Farm ID");
+      TableColumn<DayData, Integer> weightCol = new TableColumn<>("Weight");
 
-      farmCol.setCellValueFactory(
-            p -> new ReadOnlyObjectWrapper<>(p.getValue().getFarmID()));
+      dateCol.setCellValueFactory(new PropertyValueFactory<>("day"));
+      farmCol.setCellValueFactory(new PropertyValueFactory<>("farmID"));
+      weightCol.setCellValueFactory(new PropertyValueFactory<>("weight"));
 
       table.getColumns().addAll(dateCol, farmCol, weightCol);
-      
-      
+
       return table;
    }
-   
-   
+
+
    /**
     * Creates the pane for the Tables tab. This pane contains all the
     * information and controls for that tab.
     * 
     * @return The pane for the Tables tab.
     */
-   @SuppressWarnings("unchecked")
    private Pane createTablesPane() {
       GridPane topOptions = new GridPane();
 
@@ -203,10 +202,6 @@ public class RunFinalProject extends Application {
       // adding options to top
       topOptions.addRow(0, farmLabel, yearLabel, monthLabel);
       topOptions.addRow(1, farms, years, months);
-
-
-      
-
 
       VBox rightOptions = new VBox();
       Button downloadButton = new Button("Download Report");
@@ -243,27 +238,23 @@ public class RunFinalProject extends Application {
       NumberAxis yAxis = new NumberAxis();
       yAxis.setLabel("Weight");
 
-      LineChart<Number, Number> chart = new LineChart<>(xAxis, yAxis);
-
-      Series<Number, Number> series = new XYChart.Series<>();
-      series.setName("2014");
-
-
-      series.getData().add(new Data<Number, Number>(1, 567));
-      series.getData().add(new Data<Number, Number>(5, 612));
-      series.getData().add(new Data<Number, Number>(10, 800));
-      series.getData().add(new Data<Number, Number>(20, 780));
-      series.getData().add(new Data<Number, Number>(40, 810));
-      series.getData().add(new Data<Number, Number>(80, 850));
-
-      chart.getData().add(series);
+      chart = new LineChart<>(xAxis, yAxis);
 
       return chart;
    }
 
 
    private void addSeries(String farmID) {
-      System.out.println(farmID);
+      XYChart.Series<Number, Number> series = new XYChart.Series<>();
+      series.setName(farmID);
+
+
+      for (DayData dayData : table.getItems()) {
+         series.getData().add(new XYChart.Data<Number, Number>(dayData.getDay(),
+               dayData.getWeight()));
+      }
+
+      chart.getData().add(series);
    }
 
 
@@ -298,24 +289,17 @@ public class RunFinalProject extends Application {
       // Label and CheckBoxes for farm input
       Label farms = new Label("Farm IDs:");
       farms.setFont(header);
-      VBox rightOptions = new VBox(farms);
-      for (int i = 0; i < 4; i++) {
-         CheckBox box = new CheckBox("Farm " + i);
-         rightOptions.getChildren().add(box);
-         box.setOnAction(a -> {
-            if (box.isSelected())
-               addSeries(box.getText());
-         });
-      }
+      rightOptions = new VBox(farms);
+      // for (int i = 0; i < 4; i++) {
+      // CheckBox box = new CheckBox("Farm " + i);
+      // rightOptions.getChildren().add(box);
+      // box.setOnAction(a -> {
+      // if (box.isSelected())
+      // addSeries(box.getText());
+      // });
+      // }
 
-      // if (yearList.size()!=0) {
-      // for (YearData year : yearList) {
-      // if (year.getNumMonths() != 0) {
-      // for (MonthData month : year.getMonthList()) {
-      // if (month.getNumFarms() != 0) {
-      // for (FarmMonth farm : month.getFarmList()) {
-      // rightOptions.getChildren()
-      // .add(new CheckBox(farm.getFarmID()));}}}}}}
+      
 
       rightOptions.setSpacing(5);
 
@@ -332,44 +316,49 @@ public class RunFinalProject extends Application {
       name = name.substring(0, name.lastIndexOf(".")); // removes .csv
 
       String[] splitName = name.split("-");
-      // gets the year and month from the title of the file
-      int year = Integer.parseInt(splitName[0]);
-      Months month = Months.values()[Integer.parseInt(splitName[1])];
 
+      int year = Integer.parseInt(splitName[0]);
 
       if (yearList == null) {
-         addYear(file);
+         addYear(file, year);
 
       } else {
          YearData yearData = getYear(year);
 
          if (yearData == null) {
-            addYear(file);
+            addYear(file, year);
 
          } else {
-            if (yearData.getMonthData(month) == null) {
-               yearData.addMonthData(file);
+            yearData.addMonthData(file);
+         }
+      }
 
-            } else {
-
-               // Alert alert = new Alert(AlertType.CONFIRMATION,
-               // "Month information already exist. Would you like to
-               // overwrite?");
-               // alert.getDialogPane().setMinSize(Region.USE_PREF_SIZE,
-               // Region.USE_PREF_SIZE);
-               //
-               // ButtonType yesButton = new ButtonType("Yes");
-               // ButtonType noButton =
-               // new ButtonType("No", ButtonData.CANCEL_CLOSE);
-               //
-               // alert.getButtonTypes().setAll(yesButton, noButton);
-               //
-               // Optional<ButtonType> result = alert.showAndWait();
-               //
-               // if (result.get() == yesButton)
-               // yearData.addMonthData(file);
-
-
+      table.setItems(yearList.get(0).getMonthList().get(0).getDayList());
+      
+      ObservableList<String> farms = FXCollections.observableArrayList();
+      if (yearList != null) {
+         for (YearData yearData : yearList) {
+            if (yearData.getNumMonths() != 0) {
+               for (MonthData month : yearData.getMonthList()) {
+                  if (month.getNumDays() != 0) {
+                     for (DayData dayData : month.getDayList()) {
+                        
+                        String farmID = dayData.getFarmID();
+                        
+                        if(!farms.contains(farmID)) {
+                           
+                           CheckBox box = new CheckBox(farmID);
+                           box.setOnAction(a -> {
+                              if (box.isSelected())
+                                 addSeries(box.getText());
+                           });
+                           rightOptions.getChildren().add(box);
+                           farms.add(farmID);
+                        }
+                        
+                     }
+                  }
+               }
             }
          }
       }
@@ -398,17 +387,40 @@ public class RunFinalProject extends Application {
       Button fileButton = new Button("Select File");
       fileButton.setOnAction(a -> {
          inputFile = fileChooser.showOpenDialog(mainStage);
-         if (inputFile != null)
+         if (inputFile != null) {
             fileField.setText(inputFile.getName());
+         }
       });
 
-      // a button that saves the file to the data structure
       Button saveButton = new Button("Save File");
+
+      // creates confirmation popup on saving file
       saveButton.setOnAction(a -> {
          if (inputFile != null) {
-            addFile(inputFile);
-            inputFile = null;
-            fileField.setText("File Saved");
+            Alert alert = new Alert(AlertType.CONFIRMATION);
+            alert.setContentText("Saving a new file may overwrite previous data"
+                  + ".  Would you still like to continue?");
+            alert.getDialogPane().setMinSize(Region.USE_PREF_SIZE,
+                  Region.USE_PREF_SIZE);
+
+            ButtonType yesButton = new ButtonType("Yes");
+            ButtonType noButton = new ButtonType("No", ButtonData.CANCEL_CLOSE);
+
+            alert.getButtonTypes().setAll(yesButton, noButton);
+
+            Optional<ButtonType> result = alert.showAndWait();
+
+            if (result.get() == noButton) {
+               alert.close();
+               fileField.setText("Canceled Save");
+               inputFile = null;
+            }
+
+            if (inputFile != null) {
+               addFile(inputFile);
+               inputFile = null;
+               fileField.setText("File Saved");
+            }
          }
       });
 

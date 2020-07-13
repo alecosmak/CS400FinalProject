@@ -1,54 +1,65 @@
 package application;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Scanner;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 
 public class MonthData {
-   private int totalMonthWeight;
+   private ObservableList<DayData> dayList;
    private Months month;
-   private ArrayList<FarmMonth> farmList;
-   private int numFarms;
+   private int numDays;
+   private int totalMonthWeight;
 
-   public int getNumFarms() {
-      return numFarms;
+   public int getNumDays() {
+      return numDays;
    }
 
-   public ArrayList<FarmMonth> getFarmList() {
-      return farmList;
+   public ObservableList<DayData> getDayList() {
+      return dayList;
    }
 
-   public MonthData(File file) {
-      String name = file.getName();
-      name = name.substring(0, name.lastIndexOf(".")); // removes .csv
-
-      String[] splitName = name.split("-");
-      // gets the year and month from the title of the file
-      int year = Integer.parseInt(splitName[0]);
-      Months month = Months.values()[Integer.parseInt(splitName[1])];
+   public MonthData(File file, Months month) {
+      dayList = FXCollections.observableArrayList();
+      this.month = month;
+      numDays = 0;
+      totalMonthWeight = 0;
 
       try {
          Scanner reader = new Scanner(file);
          reader.nextLine();
-         
+
          while (reader.hasNextLine()) { // loops through all the lines of the
                                         // file
             String[] line = reader.nextLine().split(",");
 
             String[] date = line[0].split("-");
-            
+
             int day = Integer.parseInt(date[2]);
             String farmID = line[1];
             int weight = Integer.parseInt(line[2]);
 
+            addDay(day, farmID, weight);
          }
 
          reader.close();
 
       } catch (Exception e) {
-         System.out.println("Error: Unknown\n" + e);
+         System.out.println("Error: Unknown\n");
+         e.printStackTrace();
       }
    }
+
+
+
+   public void addDay(int day, String farmID, int weight) {
+
+      dayList.add(new DayData(day, farmID, weight));
+
+      numDays++;
+   }
+
+
 
    public Months getMonth() {
       return month;
@@ -58,19 +69,16 @@ public class MonthData {
       return totalMonthWeight;
    }
 
-   public FarmMonth getFarm(String farmID) {
-      for (FarmMonth farm : farmList) {
-         if (farm.getFarmID().equals(farmID))
-            return farm;
+
+   public DayData getDay(int day, String farmID) {
+      for (DayData dayData : dayList) {
+         if (dayData.getDay() == day && dayData.getFarmID().equals(farmID))
+            return dayData;
       }
 
       return null;
    }
 
-   public void addFarm(FarmMonth farm) {
-      numFarms++;
-
-   }
 
 
 }
