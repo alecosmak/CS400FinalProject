@@ -1,12 +1,11 @@
 /**
  * Project: Milk Weights Final Project
- * Files: RunFinalProject.java
+ * Files: project.zip (RunFinalProject.java, YearData.java, MonthData.java,
+ * DayData.java, Months.java, cheeseLogo.jpg, README.txt)
  * 
  * Description: This is the final project for CS 400 Summer 2020. This program
  * is an interactive data visualizer that utilizes a GUI to display the data.
- * Through the GUI the user be able to add, copy, and change data.
- * 
- * http://tutorials.jenkov.com/javafx/
+ * Through the GUI the user can add, copy, and change data.
  * 
  * Author: Alec Osmak
  * Email: osmak@wisc.edu
@@ -65,15 +64,21 @@ import javafx.stage.Stage;
  */
 public class RunFinalProject extends Application {
 
-   private ObservableList<YearData> yearList;
+   private ObservableList<YearData> yearList; // list of years
    private Stage mainStage;
-   private File inputFile;
-   private Font header = new Font(14);
-   private TableView<DayData> table;
+   private File inputFile; // a file input into the ds
+   private Font header; // font used for header text
+   private TableView<DayData> table; 
    private LineChart<Number, Number> chart;
    private VBox rightOptions;
 
 
+   /**
+    * 
+    * 
+    * @param file
+    * @param year
+    */
    private void addYear(File file, int year) {
       if (yearList == null)
          yearList = FXCollections.observableArrayList();
@@ -244,6 +249,11 @@ public class RunFinalProject extends Application {
    }
 
 
+   /**
+    * 
+    * 
+    * @param farmID
+    */
    private void addSeries(String farmID) {
       XYChart.Series<Number, Number> series = new XYChart.Series<>();
       series.setName(farmID);
@@ -299,7 +309,7 @@ public class RunFinalProject extends Application {
       // });
       // }
 
-      
+
 
       rightOptions.setSpacing(5);
 
@@ -311,6 +321,11 @@ public class RunFinalProject extends Application {
    }
 
 
+   /**
+    * 
+    * 
+    * @param file
+    */
    private void addFile(File file) {
       String name = file.getName();
       name = name.substring(0, name.lastIndexOf(".")); // removes .csv
@@ -334,7 +349,7 @@ public class RunFinalProject extends Application {
       }
 
       table.setItems(yearList.get(0).getMonthList().get(0).getDayList());
-      
+
       ObservableList<String> farms = FXCollections.observableArrayList();
       if (yearList != null) {
          for (YearData yearData : yearList) {
@@ -342,11 +357,11 @@ public class RunFinalProject extends Application {
                for (MonthData month : yearData.getMonthList()) {
                   if (month.getNumDays() != 0) {
                      for (DayData dayData : month.getDayList()) {
-                        
+
                         String farmID = dayData.getFarmID();
-                        
-                        if(!farms.contains(farmID)) {
-                           
+
+                        if (!farms.contains(farmID)) {
+
                            CheckBox box = new CheckBox(farmID);
                            box.setOnAction(a -> {
                               if (box.isSelected())
@@ -355,7 +370,6 @@ public class RunFinalProject extends Application {
                            rightOptions.getChildren().add(box);
                            farms.add(farmID);
                         }
-                        
                      }
                   }
                }
@@ -398,6 +412,7 @@ public class RunFinalProject extends Application {
       saveButton.setOnAction(a -> {
          if (inputFile != null) {
             Alert alert = new Alert(AlertType.CONFIRMATION);
+            alert.setHeaderText("Save File Confirmation");
             alert.setContentText("Saving a new file may overwrite previous data"
                   + ".  Would you still like to continue?");
             alert.getDialogPane().setMinSize(Region.USE_PREF_SIZE,
@@ -524,6 +539,7 @@ public class RunFinalProject extends Application {
    @Override
    public void start(Stage mainStage) throws Exception {
       this.mainStage = mainStage;
+      header = new Font(14);
 
       // creates all the tabs
       Tab homeTab = new Tab("Home");
