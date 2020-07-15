@@ -53,7 +53,8 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 /**
- * 
+ * Runs the program. Creates the GUI and shows it to the user. Is able to read
+ * CSV files and gather the data from them.
  * 
  * @author Alec Osmak
  */
