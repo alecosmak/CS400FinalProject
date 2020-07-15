@@ -13,6 +13,9 @@
 
 package application;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+
 /**
  * Stores the data for a day in a month.
  * 
@@ -20,6 +23,9 @@ package application;
  */
 public class DayData {
 
+   private final DateTimeFormatter FORMAT =
+         DateTimeFormatter.ofPattern("yyyy-M-d");
+   private LocalDate date;
    private int day;
    private String farmID;
    private int weight;
@@ -28,11 +34,13 @@ public class DayData {
    /**
     * Creates a new instance of a day's worth of data and initialize the fields.
     * 
+    * @param date   The String of the complete date.
     * @param day    The day in the month it is.
     * @param farmID The id of what farm has this day's weight.
     * @param weight The weight that was sold on this day.
     */
-   public DayData(int day, String farmID, int weight) {
+   public DayData(String date, int day, String farmID, int weight) {
+      this.date = LocalDate.parse(date, FORMAT);
       this.day = day;
       this.farmID = farmID;
       this.weight = weight;
@@ -40,7 +48,17 @@ public class DayData {
 
 
    /**
-    * Returns the day in the month it is.
+    * Returns the date for this day as a Date object.
+    * 
+    * @return The date field.
+    */
+   public LocalDate getDate() {
+      return date;
+   }
+
+
+   /**
+    * Returns the day in the month it is as an int.
     * 
     * @return The day field.
     */

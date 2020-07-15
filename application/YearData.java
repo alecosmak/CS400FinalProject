@@ -33,16 +33,16 @@ public class YearData {
    /**
     * Creates a new year from a file for a month. Also initializes fields.
     * 
-    * @param file The file for a month that is part of a new year.
-    * @param year The year this will be.
+    * @param file      The file for a month that is part of a new year.
+    * @param yearMonth The year and month of the file.
     */
-   public YearData(File file, int year) {
+   public YearData(File file, String[] yearMonth) {
       monthList = FXCollections.observableArrayList(); // creates new list
-      this.year = year;
+      year = Integer.parseInt(yearMonth[0]);
       numMonths = 0;
       totalYearWeight = 0;
 
-      addMonthData(file);
+      addMonthData(file, yearMonth[1]);
    }
 
 
@@ -67,7 +67,7 @@ public class YearData {
          if (monthData.getMonth() == month)
             return monthData;
       }
-      
+
       return null;
    }
 
@@ -103,17 +103,14 @@ public class YearData {
 
 
    /**
-    * Adds a month to this year from a file.
+    * Adds a month to this year from a file and the month.
     * 
-    * @param file The file that contains a month of data.
+    * @param file     The file that contains a month of data.
+    * @param numMonth A string value for the numerical month.
     */
-   public void addMonthData(File file) {
-      String name = file.getName();
-      name = name.substring(0, name.lastIndexOf(".")); // removes .csv from name
-      String[] date = name.split("-"); // splits file name into date
-
+   public void addMonthData(File file, String numMonth) {
       // gets the name of the month from its integer value
-      Months month = Months.values()[Integer.parseInt(date[1])];
+      Months month = Months.values()[Integer.parseInt(numMonth) - 1];
 
       MonthData newMonth = new MonthData(file, month);
       monthList.add(newMonth);

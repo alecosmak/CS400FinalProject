@@ -50,14 +50,15 @@ public class MonthData {
 
          while (reader.hasNextLine()) { // goes through the file
             String[] line = reader.nextLine().split(","); // separates file line
-            String[] date = line[0].split("-"); // separates date
+            String date = line[0]; // separates date
 
             // stores info from the line of the file
-            int day = Integer.parseInt(date[2]);
+            String stringDay = date.substring(date.lastIndexOf("-"));
+            int day = Integer.parseInt(stringDay);
             String farmID = line[1];
             int weight = Integer.parseInt(line[2]);
 
-            addDay(day, farmID, weight);
+            addDay(date, day, farmID, weight);
          }
 
          reader.close();
@@ -130,12 +131,13 @@ public class MonthData {
    /**
     * Adds a day's worth of data to the list.
     * 
+    * @param date   The String of the complete date.
     * @param day    The day in the month it is.
     * @param farmID The farm ID of the farm whose day data this is.
     * @param weight The weight sold for on this day.
     */
-   public void addDay(int day, String farmID, int weight) {
-      dayList.add(new DayData(day, farmID, weight));
+   public void addDay(String date, int day, String farmID, int weight) {
+      dayList.add(new DayData(date, day, farmID, weight));
 
       totalMonthWeight += weight;
       numDays++;
