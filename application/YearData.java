@@ -22,7 +22,7 @@ import javafx.collections.ObservableList;
  * 
  * @author Alec Osmak
  */
-public class YearData {
+class YearData {
 
    private ObservableList<MonthData> monthList; // list of months in the year
    private int year;
@@ -36,7 +36,7 @@ public class YearData {
     * @param file      The file for a month that is part of a new year.
     * @param yearMonth The year and month of the file.
     */
-   public YearData(File file, String[] yearMonth) {
+   YearData(File file, String[] yearMonth) {
       monthList = FXCollections.observableArrayList(); // creates new list
       year = Integer.parseInt(yearMonth[0]);
       numMonths = 0;
@@ -51,7 +51,7 @@ public class YearData {
     * 
     * @return The list of months.
     */
-   public ObservableList<MonthData> getMonthList() {
+   ObservableList<MonthData> getMonthList() {
       return monthList;
    }
 
@@ -62,7 +62,7 @@ public class YearData {
     * @param month The name of the month.
     * @return The month of data found, or null if the month doesn't exist.
     */
-   public MonthData getMonthData(Months month) {
+   MonthData getMonthData(Months month) {
       for (MonthData monthData : monthList) {
          if (monthData.getMonth() == month)
             return monthData;
@@ -77,7 +77,7 @@ public class YearData {
     * 
     * @return The year it is.
     */
-   public int getYear() {
+   int getYear() {
       return year;
    }
 
@@ -87,7 +87,7 @@ public class YearData {
     * 
     * @return The number of months in this year.
     */
-   public int getNumMonths() {
+   int getNumMonths() {
       return numMonths;
    }
 
@@ -97,7 +97,7 @@ public class YearData {
     * 
     * @return The total weight for this year.
     */
-   public int getTotalYearWeight() {
+   int getTotalYearWeight() {
       return totalYearWeight;
    }
 
@@ -108,7 +108,7 @@ public class YearData {
     * @param file     The file that contains a month of data.
     * @param numMonth A string value for the numerical month.
     */
-   public void addMonthData(File file, String numMonth) {
+   void addMonthData(File file, String numMonth) {
       // gets the name of the month from its integer value
       Months month = Months.values()[Integer.parseInt(numMonth) - 1];
 

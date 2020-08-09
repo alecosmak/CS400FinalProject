@@ -23,7 +23,7 @@ import javafx.collections.ObservableList;
  * 
  * @author Alec Osmak
  */
-public class MonthData {
+class MonthData {
 
    private ObservableList<DayData> dayList; // list of days in the month
    private Months month; // name of month it is from enum
@@ -38,7 +38,7 @@ public class MonthData {
     * @param file  A csv file that contains the data to store for this month.
     * @param month The months it is.
     */
-   public MonthData(File file, Months month) {
+   MonthData(File file, Months month) {
       dayList = FXCollections.observableArrayList(); // creates new list
       this.month = month;
       numDays = 0;
@@ -75,7 +75,7 @@ public class MonthData {
     * 
     * @return The list of days.
     */
-   public ObservableList<DayData> getDayList() {
+   ObservableList<DayData> getDayList() {
       return dayList;
    }
 
@@ -88,7 +88,7 @@ public class MonthData {
     * @return The day of data associated with the parameters, or null if the day
     *         doesn't exist.
     */
-   public DayData getDay(int day, String farmID) {
+   DayData getDay(int day, String farmID) {
       for (DayData dayData : dayList) { // goes through everyday in the list
          if (dayData.getDay() == day && dayData.getFarmID().equals(farmID))
             return dayData;
@@ -103,7 +103,7 @@ public class MonthData {
     * 
     * @return The month it is.
     */
-   public Months getMonth() {
+   Months getMonth() {
       return month;
    }
 
@@ -113,7 +113,7 @@ public class MonthData {
     * 
     * @return The number of days in this list.
     */
-   public int getNumDays() {
+   int getNumDays() {
       return numDays;
    }
 
@@ -123,7 +123,7 @@ public class MonthData {
     * 
     * @return The total weight sold for this month.
     */
-   public int getTotalMonthWeight() {
+   int getTotalMonthWeight() {
       return totalMonthWeight;
    }
 
@@ -136,7 +136,7 @@ public class MonthData {
     * @param farmID The farm ID of the farm whose day data this is.
     * @param weight The weight sold for on this day.
     */
-   public void addDay(String date, int day, String farmID, int weight) {
+   void addDay(String date, int day, String farmID, int weight) {
       dayList.add(new DayData(date, day, farmID, weight));
 
       totalMonthWeight += weight;

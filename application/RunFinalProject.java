@@ -17,6 +17,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Optional;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
@@ -60,13 +61,20 @@ import javafx.stage.Stage;
  */
 public class RunFinalProject extends Application {
 
-   private ObservableList<YearData> yearList; // list of years
    private Stage mainStage;
+   private TableView<DayData> table; // the table displayed
+   private ObservableList<YearData> yearList; // list of years
    private File inputFile; // a file input into the ds
    private Font header; // font used for header text
-   private TableView<DayData> table;
    private double fieldWidth; // used to size TextFields
    private double comboWidth; // used to size ComboBoxes
+   // combo boxes that are updated with data
+   private ComboBox<String> tableFarms;
+   private ComboBox<String> tableYears;
+   private ComboBox<String> tableMonths;
+   private ComboBox<String> reportFarms;
+   private ComboBox<String> reportYears;
+   private ComboBox<String> reportMonths;
 
 
    /**
@@ -96,6 +104,148 @@ public class RunFinalProject extends Application {
          yearList = FXCollections.observableArrayList();
 
       yearList.add(new YearData(file, yearMonth));
+   }
+
+
+   /**
+    * Adds the data to the table depending on what the user wants to be shown.
+    * What is shown is determined from the controls above the table.
+    */
+   private void displayTableData() {
+      table.getItems().clear();
+
+      if (yearList != null) {
+         ArrayList<DayData> tableData = new ArrayList<>(); // stores all data
+
+         for (YearData yearData : yearList) {
+            for (MonthData monthData : yearData.getMonthList()) {
+               for (DayData dayData : monthData.getDayList()) {
+                  tableData.add(dayData); // adds all data to tableData
+               }
+            }
+         }
+
+         // list of data to remove from tableData
+         ArrayList<DayData> removeList = new ArrayList<>();
+
+         if (tableFarms.getValue() != null) {
+            for (int i = 0; i < tableData.size(); i++) { // removes by farm id
+               DayData dayData = tableData.get(i);
+
+               if (!dayData.getFarmID().equals(tableFarms.getValue()))
+                  removeList.add(dayData);
+            }
+         }
+
+         if (tableYears.getValue() != null) {
+            for (int i = 0; i < tableData.size(); i++) { // removes by year
+               DayData dayData = tableData.get(i);
+               int year = dayData.getDate().getYear();
+
+               if (year != Integer.valueOf(tableYears.getValue()))
+                  removeList.add(dayData);
+            }
+         }
+
+         if (tableMonths.getValue() != null) {
+            String value = tableMonths.getValue();
+            Months month = Months.valueOf(value);
+
+            for (int i = 0; i < tableData.size(); i++) { // removes by month
+               DayData dayData = tableData.get(i);
+               int dateMonth = dayData.getDate().getMonthValue();
+
+               if (month != Months.values()[dateMonth - 1])
+                  removeList.add(dayData);
+            }
+         }
+
+         for (DayData dayData : removeList)
+            tableData.remove(dayData); // removes data from tableData
+
+         for (DayData dayData : tableData)
+            table.getItems().add(dayData); // adds remaining data to table
+      }
+   }
+
+
+   /**
+    * Updates the combo boxes to have all options available from the data.
+    */
+   private void updateComboBoxes() {
+      // resets combo boxes to be empty
+      tableFarms.getItems().clear();
+      tableYears.getItems().clear();
+      tableMonths.getItems().clear();
+      reportFarms.getItems().clear();
+      reportYears.getItems().clear();
+      reportMonths.getItems().clear();
+
+      // adds an any option
+      tableFarms.getItems().add(null);
+      tableYears.getItems().add(null);
+      tableMonths.getItems().add(null);
+
+      // adds all years to the year combo boxes
+      for (YearData year : yearList) {
+         if (!tableYears.getItems().contains(String.valueOf(year.getYear()))) {
+            tableYears.getItems().add(String.valueOf(year.getYear()));
+            reportYears.getItems().add(String.valueOf(year.getYear()));
+         }
+      }
+
+      // adds all months to the month combo boxes
+      for (YearData year : yearList) {
+         for (MonthData month : year.getMonthList()) {
+            if (!tableMonths.getItems()
+                  .contains(String.valueOf(month.getMonth()))) {
+               tableMonths.getItems().add(String.valueOf(month.getMonth()));
+               reportMonths.getItems().add(String.valueOf(month.getMonth()));
+            }
+
+         }
+      }
+
+      // adds all farm id's to the farm id combo boxes
+      for (YearData year : yearList) {
+         for (MonthData month : year.getMonthList()) {
+            for (DayData day : month.getDayList()) {
+               if (!tableFarms.getItems().contains(day.getFarmID())) {
+                  tableFarms.getItems().add(day.getFarmID());
+                  reportFarms.getItems().add(day.getFarmID());
+               }
+            }
+         }
+      }
+   }
+
+
+   /**
+    * Creates and formats the combo boxes used in this GUI.
+    */
+   private void createComboBoxes() {
+      // combo boxes for table tab
+      tableFarms = new ComboBox<>();
+      tableFarms.setPrefWidth(comboWidth);
+      tableFarms.setOnAction(a -> displayTableData());
+
+      tableYears = new ComboBox<>();
+      tableYears.setPrefWidth(comboWidth);
+      tableYears.setOnAction(a -> displayTableData());
+
+      tableMonths = new ComboBox<>();
+      tableMonths.setPrefWidth(comboWidth);
+      tableMonths.setOnAction(a -> displayTableData());
+
+      // combo boxes for reports tab
+      reportFarms = new ComboBox<>();
+      reportFarms.setPrefWidth(comboWidth);
+
+      reportYears = new ComboBox<>();
+      reportYears.setPrefWidth(comboWidth);
+
+      reportMonths = new ComboBox<>();
+      reportMonths.setPrefWidth(comboWidth);
    }
 
 
@@ -193,31 +343,15 @@ public class RunFinalProject extends Application {
       GridPane topOptions = new GridPane();
 
       // creates labels for options
-      Label farmLabel = new Label("Farm ID:");
+      Label farmLabel = new Label("Farm:");
       Label yearLabel = new Label("Year:");
       Label monthLabel = new Label("Month:");
 
-      // creates drop down boxes for options
-      ComboBox<String> farms = new ComboBox<>();
-      farms.setPrefWidth(comboWidth);
-      farms.setEditable(true);
-      farms.getItems().addAll("farm 1", "farm 2");
-
-      ComboBox<String> years = new ComboBox<>();
-      years.setPrefWidth(comboWidth);
-      years.setEditable(true);
-      years.getItems().addAll("2019", "2020");
-
-      ComboBox<String> months = new ComboBox<>();
-      months.setPrefWidth(comboWidth);
-      months.setEditable(true);
-      months.getItems().addAll("jan", "feb");
-
-      Button downloadButton = new Button("Download Report");
+      Button downloadButton = new Button("Download All Data");
 
       // adding options to top
       topOptions.addRow(0, farmLabel, yearLabel, monthLabel);
-      topOptions.addRow(1, farms, years, months, downloadButton);
+      topOptions.addRow(1, tableFarms, tableYears, tableMonths, downloadButton);
 
       // formatting grid
       topOptions.setHgap(20);
@@ -251,9 +385,9 @@ public class RunFinalProject extends Application {
       bottomAdd.setPadding(new Insets(5, 0, 0, 0));
       bottomAdd.setAlignment(Pos.CENTER);
 
-      BorderPane tablesPane =
-            new BorderPane(createTable(), topOptions, null, bottomAdd, null);
-      tablesPane.setPadding(new Insets(10, 15, 10, 10));
+      VBox tablesPane = new VBox(topOptions, createTable(), bottomAdd);
+      tablesPane.setPadding(new Insets(10, 10, 10, 10));
+      tablesPane.setAlignment(Pos.CENTER);
 
       return tablesPane;
    }
@@ -266,34 +400,27 @@ public class RunFinalProject extends Application {
     */
    private void addFile(File file) {
       String name = file.getName();
-      name = name.substring(0, name.lastIndexOf(".")); // removes .csv
+      name = name.substring(0, name.lastIndexOf(".")); // removes ".csv"
 
-      String[] yearMonth = name.split("-");
+      String[] yearMonth = name.split("-"); // splits date
       int year = Integer.parseInt(yearMonth[0]);
 
-      // determines if it should add on or create a new year
-      if (yearList == null) {
+      // determines if it should add or create a year
+      if (yearList == null) { // no data yet
          addYear(file, yearMonth);
 
       } else {
          YearData yearData = getYear(year);
 
-         if (yearData == null) {
+         if (yearData == null) { // new year
             addYear(file, yearMonth);
 
-         } else {
+         } else { // add to existing year
             yearData.addMonthData(file, yearMonth[1]);
          }
       }
 
-      // adds every day of data to the table
-      for (YearData yearData : yearList) {
-         for (MonthData monthData : yearData.getMonthList()) {
-            for (DayData dayData : monthData.getDayList()) {
-               table.getItems().add(dayData);
-            }
-         }
-      }
+      updateComboBoxes();
    }
 
 
@@ -306,7 +433,7 @@ public class RunFinalProject extends Application {
    private Pane createInputFilesPane() {
       GridPane pane = new GridPane();
 
-      // creates a FileChooser for selecting a file with the OS's file manager
+      // creates a FileChooser for selecting a file in the OS file manager
       FileChooser fileChooser = new FileChooser();
       fileChooser.setTitle("Select CSV File");
       fileChooser.getExtensionFilters()
@@ -337,7 +464,8 @@ public class RunFinalProject extends Application {
             // formatting popup
             alert.setHeaderText("Save File Confirmation");
             alert.setContentText("Saving a new file may overwrite previous data"
-                  + ".  Would you still like to continue?");
+                  + " if the FarmID and date are the same.  Would you still like"
+                  + " to continue?");
             alert.getDialogPane().setMinSize(Region.USE_PREF_SIZE,
                   Region.USE_PREF_SIZE);
 
@@ -350,7 +478,7 @@ public class RunFinalProject extends Application {
             Optional<ButtonType> result = alert.showAndWait();
             if (result.get() == noButton) {
                alert.close();
-               fileField.setText("Canceled Save");
+               fileField.setText("Save Canceled");
                inputFile = null;
             }
 
@@ -358,6 +486,7 @@ public class RunFinalProject extends Application {
                addFile(inputFile);
                inputFile = null;
                fileField.setText("File Saved");
+               displayTableData();
             }
          }
       });
@@ -381,7 +510,8 @@ public class RunFinalProject extends Application {
     * @return The pane for the Reports tab.
     */
    private Pane createReportsPane() {
-      GridPane reportsPane = new GridPane();
+      VBox reportBox = new VBox();
+      GridPane grid = new GridPane();
 
       // creating and formatting all Labels
       Label reportLabel = new Label("Report");
@@ -419,61 +549,36 @@ public class RunFinalProject extends Application {
       monthPercentField.setEditable(false);
       monthPercentField.setPrefWidth(fieldWidth);
 
-      // creating and formatting all ComboBoxes
-      ComboBox<String> farms = new ComboBox<>();
-      farms.setEditable(true);
-      farms.setPrefWidth(comboWidth);
-      farms.getItems().addAll("farm 1", "farm 2");
-
-      ComboBox<String> years = new ComboBox<>();
-      years.setEditable(true);
-      years.setPrefWidth(comboWidth);
-      years.getItems().addAll("2019", "2020");
-
-      ComboBox<String> months = new ComboBox<>();
-      months.setEditable(true);
-      months.setPrefWidth(comboWidth);
-      months.getItems().addAll("jan", "feb");
-
-      // (temporary) handles when an item is selected in a ComboBox
-      farms.setOnAction(a -> {
-         String value = farms.getValue();
-         farmTotalField.setText(value + " total");
-         farmPercentField.setText(value + " weight%");
-      });
-      years.setOnAction(a -> {
-         String value = years.getValue();
-         yearTotalField.setText(value + " total");
-         yearPercentField.setText(value + " weight%");
-      });
-      months.setOnAction(a -> {
-         String value = months.getValue();
-         monthTotalField.setText(value + " total");
-         monthPercentField.setText(value + " weight%");
-      });
-
       // adding controls to GridPane
-      reportsPane.addRow(0, reportLabel, selectLabel, totalLabel, percentLabel);
-      reportsPane.addRow(1, farmLabel, farms, farmTotalField, farmPercentField);
-      reportsPane.addRow(2, yearLabel, years, yearTotalField, yearPercentField);
-      reportsPane.addRow(3, monthLabel, months, monthTotalField,
+      grid.addRow(0, reportLabel, selectLabel, totalLabel, percentLabel);
+      grid.addRow(1, farmLabel, reportFarms, farmTotalField, farmPercentField);
+      grid.addRow(2, yearLabel, reportYears, yearTotalField, yearPercentField);
+      grid.addRow(3, monthLabel, reportMonths, monthTotalField,
             monthPercentField);
 
       // formatting GridPane
       GridPane.setHalignment(selectLabel, HPos.CENTER);
       GridPane.setHalignment(totalLabel, HPos.CENTER);
       GridPane.setHalignment(percentLabel, HPos.CENTER);
-      reportsPane.setPadding(new Insets(40, 10, 10, 10));
-      reportsPane.setHgap(15);
-      reportsPane.setVgap(10);
-      reportsPane.setAlignment(Pos.TOP_CENTER);
+      grid.setHgap(15);
+      grid.setVgap(10);
 
-      return reportsPane;
+      Label range = new Label("Select date range");
+      range.setFont(header);
+
+      grid.setAlignment(Pos.TOP_CENTER);
+
+      reportBox.getChildren().addAll(grid, range);
+      reportBox.setSpacing(40);
+      reportBox.setPadding(new Insets(40, 10, 10, 10));
+      reportBox.setAlignment(Pos.TOP_CENTER);
+
+      return reportBox;
    }
 
 
    /**
-    * Creates the GUI and displays it to the user.
+    * Creates the tab based GUI and displays it to the user.
     * 
     * @param pStage The primary stage to display the GUI window.
     */
@@ -489,6 +594,8 @@ public class RunFinalProject extends Application {
       Tab tablesTab = new Tab("  Tables  ");
       Tab inputFilesTab = new Tab("Input Files");
       Tab reportsTab = new Tab("  Reports  ");
+
+      createComboBoxes();
 
       // adds the panes to each tab
       homeTab.setContent(createHomePane());
