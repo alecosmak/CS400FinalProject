@@ -17,6 +17,9 @@ import java.io.File;
 import java.util.Scanner;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.layout.Region;
 
 /**
  * Stores the data for a month. Can read data from a file to add days.
@@ -47,18 +50,34 @@ class MonthData {
       try {
          Scanner reader = new Scanner(file);
          reader.nextLine();
+         Boolean failed = false; // whether or not it failed to create day
 
          while (reader.hasNextLine()) { // goes through the file
             String[] line = reader.nextLine().split(","); // separates file line
             String date = line[0]; // separates date
 
-            // stores info from the line of the file
-            String stringDay = date.substring(date.lastIndexOf("-"));
-            int day = Integer.parseInt(stringDay);
-            String farmID = line[1];
-            int weight = Integer.parseInt(line[2]);
+            try {
+               // stores info from the line of the file
+               String stringDay = date.substring(date.lastIndexOf("-"));
+               int day = Integer.parseInt(stringDay);
+               String farmID = line[1];
+               int weight = Integer.parseInt(line[2]);
 
-            addDay(date, day, farmID, weight);
+               addDay(date, day, farmID, weight);
+
+            } catch (Exception e) { // catches when data is not right
+               failed = true;
+            }
+         }
+
+         if (failed) { // shows error dialog
+            Alert alert = new Alert(AlertType.ERROR, "One or more lines of data"
+                  + " had errors and were skipped. All other lines have still"
+                  + " been added.");
+            alert.setHeaderText("Error Loading Data");
+            alert.getDialogPane().setMinSize(Region.USE_PREF_SIZE,
+                  Region.USE_PREF_SIZE);
+            alert.show();
          }
 
          reader.close();

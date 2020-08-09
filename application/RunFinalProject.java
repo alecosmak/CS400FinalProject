@@ -16,6 +16,8 @@ package application;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -39,6 +41,7 @@ import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -70,6 +73,7 @@ public class RunFinalProject extends Application {
    private double comboWidth; // used to size ComboBoxes
    private TextField totalTableField;
    private TextField percentTableField;
+   private Label percentTableLabel;
    // combo boxes that are updated with data
    private ComboBox<String> tableFarms;
    private ComboBox<String> tableYears;
@@ -257,15 +261,59 @@ public class RunFinalProject extends Application {
     * Updates the sum of the weights that the table currently has displayed.
     */
    private void updateTableTotalWeight() {
-      int totalWeight = 0;
-
+      int tableTotal = 0;
       for (DayData day : table.getItems())
-         totalWeight += day.getWeight();
+         tableTotal += day.getWeight();
 
-      // double percent = totalWeight / yeartotal
+      totalTableField.setText(String.valueOf(tableTotal));
+
+      int dataTotal = 0;
+      for (YearData year : yearList)
+         dataTotal += year.getTotalYearWeight();
+
+      double percent = 100.0;
+
+      percent = ((double) tableTotal / dataTotal) * 100;
+
+      DecimalFormat df = new DecimalFormat("###.##"); // 2 decimal digits
+      percentTableField.setText(df.format(percent) + "%");
+   }
 
 
-      totalTableField.setText(String.valueOf(totalWeight));
+   /**
+    * Downloads all available data to a single CSV file.
+    * 
+    * @param fileName The name of the new CSV file.
+    */
+   private void downloadData(String fileName) {
+      if (!fileName.endsWith(".csv")) // makes sure the file name ends in .csv
+         fileName = fileName.concat(".csv");
+
+      try {
+         File file = new File(fileName);
+         PrintWriter writer = new PrintWriter(file);
+         
+         // adds all data to the file
+         writer.println("date,farm_id,weight");
+         for (YearData year : yearList) {
+            for (MonthData month : year.getMonthList()) {
+               for (DayData day : month.getDayList()) {
+                  writer.print(day.getDate() + ",");
+                  writer.print(day.getFarmID() + ",");
+                  writer.println(day.getWeight());
+               }
+            }
+         }
+
+         writer.flush();
+         writer.close();
+
+      } catch (Exception e) { // shows an error dialog for bad file name
+         Alert alert = new Alert(AlertType.ERROR, "File name not allowed. File"
+               + " creation canceled.");
+         alert.setHeaderText("Error With File Name");
+         alert.show();
+      }
    }
 
 
@@ -308,7 +356,7 @@ public class RunFinalProject extends Application {
          Alert alert = new Alert(AlertType.INFORMATION,
                "Home image could not be found. Everything else will still "
                      + "function correctly.");
-         alert.setHeaderText("Problem Loading");
+         alert.setHeaderText("Problem Loading Image");
          alert.getDialogPane().setMinSize(Region.USE_PREF_SIZE,
                Region.USE_PREF_SIZE);
          alert.showAndWait();
@@ -359,7 +407,7 @@ public class RunFinalProject extends Application {
     * 
     * @return The pane for the table tab.
     */
-   private Pane createtablePane() {
+   private Pane createTablePane() {
       GridPane topOptions = new GridPane();
 
       // creates labels for options
@@ -367,7 +415,21 @@ public class RunFinalProject extends Application {
       Label yearLabel = new Label("Year:");
       Label monthLabel = new Label("Month:");
 
+      // button to download all available data
       Button downloadButton = new Button("Download All Data");
+      downloadButton.setOnAction(a -> { // creates dialog for file name input
+         if (yearList != null) {
+            TextInputDialog inputDialog = new TextInputDialog("fileName");
+            inputDialog.setTitle("Enter File Name");
+            inputDialog.setHeaderText("Please enter name of new .csv file ("
+                  + "exclude file extension).");
+            inputDialog.getEditor().setMaxWidth(150);
+
+            Optional<String> result = inputDialog.showAndWait();
+            if (result.isPresent()) // downloads data
+               downloadData(result.get());
+         }
+      });
 
       // adding options and formatting grid
       topOptions.addRow(0, farmLabel, yearLabel, monthLabel);
@@ -380,11 +442,11 @@ public class RunFinalProject extends Application {
       Label totalLabel = new Label("Total Weight:");
       totalTableField = new TextField("0");
       totalTableField.setPrefWidth(75);
-      Label percentLabel = new Label("Pecent of Year:");
+      percentTableLabel = new Label("Pecent of Total:");
       percentTableField = new TextField("0.0%");
       percentTableField.setPrefWidth(75);
-      HBox totalWeight = new HBox(10, totalLabel, totalTableField, percentLabel,
-            percentTableField);
+      HBox totalWeight = new HBox(10, totalLabel, totalTableField,
+            percentTableLabel, percentTableField);
       totalWeight.setAlignment(Pos.CENTER_RIGHT);
       totalWeight.setPadding(new Insets(5, 80, 5, 0));
 
@@ -409,8 +471,8 @@ public class RunFinalProject extends Application {
       });
 
       // creating and formatting bottom options
-      HBox bottomAdd =
-            new HBox(10, addLabel, dateField, farmField, weightField, enterButton);
+      HBox bottomAdd = new HBox(10, addLabel, dateField, farmField, weightField,
+            enterButton);
       bottomAdd.setAlignment(Pos.CENTER);
 
       // adding to table tab pane
@@ -494,8 +556,8 @@ public class RunFinalProject extends Application {
             // formatting popup
             alert.setHeaderText("Save File Confirmation");
             alert.setContentText("Saving a new file will overwrite previous "
-                  + "data if the year and month are the same.  Would you still"
-                  + " like to continue?");
+                  + "data if the year and month are the same. Would you still "
+                  + "like to continue?");
             alert.getDialogPane().setMinSize(Region.USE_PREF_SIZE,
                   Region.USE_PREF_SIZE);
 
@@ -629,7 +691,7 @@ public class RunFinalProject extends Application {
 
       // adds the panes to each tab
       homeTab.setContent(createHomePane());
-      tableTab.setContent(createtablePane());
+      tableTab.setContent(createTablePane());
       inputFilesTab.setContent(createInputFilesPane());
       reportsTab.setContent(createReportsPane());
 
