@@ -68,6 +68,8 @@ public class RunFinalProject extends Application {
    private Font header; // font used for header text
    private double fieldWidth; // used to size TextFields
    private double comboWidth; // used to size ComboBoxes
+   private TextField totalTableField;
+   private TextField percentTableField;
    // combo boxes that are updated with data
    private ComboBox<String> tableFarms;
    private ComboBox<String> tableYears;
@@ -166,6 +168,8 @@ public class RunFinalProject extends Application {
          for (DayData dayData : tableData)
             table.getItems().add(dayData); // adds remaining data to table
       }
+
+      updateTableTotalWeight();
    }
 
 
@@ -250,6 +254,22 @@ public class RunFinalProject extends Application {
 
 
    /**
+    * Updates the sum of the weights that the table currently has displayed.
+    */
+   private void updateTableTotalWeight() {
+      int totalWeight = 0;
+
+      for (DayData day : table.getItems())
+         totalWeight += day.getWeight();
+
+      // double percent = totalWeight / yeartotal
+
+
+      totalTableField.setText(String.valueOf(totalWeight));
+   }
+
+
+   /**
     * Creates the pane for the Home tab. This pane contains all the information
     * and controls for that tab.
     * 
@@ -260,7 +280,7 @@ public class RunFinalProject extends Application {
 
       // the text to display on the home tab
       String homeString = "Welcome to the Milk Weights GUI!  Please select a "
-            + "tab to access milk weight data.\n - Tables displays a data table"
+            + "tab to access milk weight data.\n - Table displays a data table"
             + " of all current data\n - Input Files allows you to add more data"
             + " from a CSV file\n - Reports shows general weight summaries";
 
@@ -304,7 +324,7 @@ public class RunFinalProject extends Application {
 
 
    /**
-    * Creates the table to be displayed on the Tables tab. Suppresses a warning
+    * Creates the table to be displayed on the table tab. Suppresses a warning
     * because it does not like having columns of Strings and Integers.
     * 
     * @return A table that can be displayed.
@@ -334,12 +354,12 @@ public class RunFinalProject extends Application {
 
 
    /**
-    * Creates the pane for the Tables tab. This pane contains all the
+    * Creates the pane for the table tab. This pane contains all the
     * information and controls for that tab.
     * 
-    * @return The pane for the Tables tab.
+    * @return The pane for the table tab.
     */
-   private Pane createTablesPane() {
+   private Pane createtablePane() {
       GridPane topOptions = new GridPane();
 
       // creates labels for options
@@ -349,14 +369,24 @@ public class RunFinalProject extends Application {
 
       Button downloadButton = new Button("Download All Data");
 
-      // adding options to top
+      // adding options and formatting grid
       topOptions.addRow(0, farmLabel, yearLabel, monthLabel);
       topOptions.addRow(1, tableFarms, tableYears, tableMonths, downloadButton);
-
-      // formatting grid
       topOptions.setHgap(20);
       topOptions.setPadding(new Insets(0, 0, 5, 0));
       topOptions.setAlignment(Pos.CENTER);
+
+      // total weight section
+      Label totalLabel = new Label("Total Weight:");
+      totalTableField = new TextField("0");
+      totalTableField.setPrefWidth(75);
+      Label percentLabel = new Label("Pecent of Year:");
+      percentTableField = new TextField("0.0%");
+      percentTableField.setPrefWidth(75);
+      HBox totalWeight = new HBox(10, totalLabel, totalTableField, percentLabel,
+            percentTableField);
+      totalWeight.setAlignment(Pos.CENTER_RIGHT);
+      totalWeight.setPadding(new Insets(5, 80, 5, 0));
 
       // label and fields for bottom options
       Label addLabel = new Label("Add day:");
@@ -380,16 +410,16 @@ public class RunFinalProject extends Application {
 
       // creating and formatting bottom options
       HBox bottomAdd =
-            new HBox(addLabel, dateField, farmField, weightField, enterButton);
-      bottomAdd.setSpacing(10);
-      bottomAdd.setPadding(new Insets(5, 0, 0, 0));
+            new HBox(10, addLabel, dateField, farmField, weightField, enterButton);
       bottomAdd.setAlignment(Pos.CENTER);
 
-      VBox tablesPane = new VBox(topOptions, createTable(), bottomAdd);
-      tablesPane.setPadding(new Insets(10, 10, 10, 10));
-      tablesPane.setAlignment(Pos.CENTER);
+      // adding to table tab pane
+      VBox tablePane =
+            new VBox(topOptions, createTable(), totalWeight, bottomAdd);
+      tablePane.setPadding(new Insets(10, 10, 10, 10));
+      tablePane.setAlignment(Pos.CENTER);
 
-      return tablesPane;
+      return tablePane;
    }
 
 
@@ -463,9 +493,9 @@ public class RunFinalProject extends Application {
 
             // formatting popup
             alert.setHeaderText("Save File Confirmation");
-            alert.setContentText("Saving a new file may overwrite previous data"
-                  + " if the FarmID and date are the same.  Would you still like"
-                  + " to continue?");
+            alert.setContentText("Saving a new file will overwrite previous "
+                  + "data if the year and month are the same.  Would you still"
+                  + " like to continue?");
             alert.getDialogPane().setMinSize(Region.USE_PREF_SIZE,
                   Region.USE_PREF_SIZE);
 
@@ -591,7 +621,7 @@ public class RunFinalProject extends Application {
 
       // creates all the tabs
       Tab homeTab = new Tab("   Home   ");
-      Tab tablesTab = new Tab("  Tables  ");
+      Tab tableTab = new Tab("   Table   ");
       Tab inputFilesTab = new Tab("Input Files");
       Tab reportsTab = new Tab("  Reports  ");
 
@@ -599,13 +629,13 @@ public class RunFinalProject extends Application {
 
       // adds the panes to each tab
       homeTab.setContent(createHomePane());
-      tablesTab.setContent(createTablesPane());
+      tableTab.setContent(createtablePane());
       inputFilesTab.setContent(createInputFilesPane());
       reportsTab.setContent(createReportsPane());
 
       // adds the individual tabs to the TabPane
       TabPane tabPane =
-            new TabPane(homeTab, tablesTab, inputFilesTab, reportsTab);
+            new TabPane(homeTab, tableTab, inputFilesTab, reportsTab);
       tabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
 
       // formats the stage and shows it to the user

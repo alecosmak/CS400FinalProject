@@ -113,6 +113,16 @@ class YearData {
       Months month = Months.values()[Integer.parseInt(numMonth) - 1];
 
       MonthData newMonth = new MonthData(file, month);
+      
+      for(MonthData monthData : monthList) {
+         if(monthData.getMonth() == newMonth.getMonth()) {
+            totalYearWeight -= monthData.getTotalMonthWeight();
+            monthData = newMonth;
+            totalYearWeight += newMonth.getTotalMonthWeight();
+            return;
+         }
+      }
+      
       monthList.add(newMonth);
 
       totalYearWeight += newMonth.getTotalMonthWeight();
