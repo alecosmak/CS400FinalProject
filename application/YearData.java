@@ -14,8 +14,12 @@
 package application;
 
 import java.io.File;
+import java.util.Scanner;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.layout.Region;
 
 /**
  * Stores the data for a year. Can adds months from a file.
@@ -112,21 +116,75 @@ class YearData {
       // gets the name of the month from its integer value
       Months month = Months.values()[Integer.parseInt(numMonth) - 1];
 
-      MonthData newMonth = new MonthData(file, month);
-      
-      for(MonthData monthData : monthList) {
-         if(monthData.getMonth() == newMonth.getMonth()) {
-            totalYearWeight -= monthData.getTotalMonthWeight();
-            monthData = newMonth;
-            totalYearWeight += newMonth.getTotalMonthWeight();
+      for (MonthData existingMonth : monthList) {
+         if (existingMonth.getMonth() == month) {
+            addToMonth(existingMonth, file);
             return;
          }
       }
-      
+
+      MonthData newMonth = new MonthData(file, month);
       monthList.add(newMonth);
 
       totalYearWeight += newMonth.getTotalMonthWeight();
       numMonths++;
+   }
+
+
+   /**
+    * Adds data from a file to an already existing month in this year. Will
+    * overwrite a day if the new day has the same date and farm id.
+    * 
+    * @param month The existing month.
+    * @param file  The file of data.
+    */
+   void addToMonth(MonthData month, File file) {
+      try {
+         Scanner reader = new Scanner(file);
+         reader.nextLine();
+         Boolean failed = false; // whether or not it failed to create a day
+         int failedLines = 0; // how many lines failed
+
+         while (reader.hasNextLine()) { // goes through the file
+            String[] line = reader.nextLine().split(","); // separates file line
+            String date = line[0]; // separates date
+
+            try {
+               // stores info from the line of the file
+               String stringDay = date.substring(date.lastIndexOf("-"));
+               int day = Integer.parseInt(stringDay);
+               String farmID = line[1];
+               int weight = Integer.parseInt(line[2]);
+
+               month.addDay(date, day, farmID, weight);
+
+            } catch (Exception e) { // catches when data is not right
+               failed = true;
+               failedLines++;
+            }
+         }
+
+         reader.close();
+
+         if (failed) { // shows error dialog
+            Alert alert = new Alert(AlertType.ERROR, failedLines + " lines of "
+                  + "data had errors and were skipped. All other lines have "
+                  + "still been added.");
+            alert.setHeaderText("Error Loading " + file.getName());
+            alert.getDialogPane().setMinSize(Region.USE_PREF_SIZE,
+                  Region.USE_PREF_SIZE);
+            alert.show();
+         }
+
+      } catch (Exception e) {
+         System.out.println("Error: Unknown\n");
+         e.printStackTrace();
+      }
+      
+      // recalculates total weight for the year
+      totalYearWeight = 0;
+      for(MonthData currentMonth : monthList)
+         totalYearWeight += currentMonth.getTotalMonthWeight();
    }
 
 

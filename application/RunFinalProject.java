@@ -20,11 +20,13 @@ import java.io.PrintWriter;
 import java.text.DecimalFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.HPos;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -64,23 +66,41 @@ import javafx.stage.Stage;
  */
 public class RunFinalProject extends Application {
 
-   private Stage mainStage;
-   private TableView<DayData> table; // the table displayed
-   private ObservableList<YearData> yearList; // list of years
-   private File inputFile; // a file input into the ds
-   private Font header; // font used for header text
-   private double fieldWidth; // used to size TextFields
-   private double comboWidth; // used to size ComboBoxes
+   private Stage mainStage; // stage everything is shown in
+   private TableView<DayData> mainTable; // the table displayed
+   private ObservableList<YearData> yearList; // list of year data
+   private List<File> inputFiles; // the files input into the ds
    private TextField totalTableField;
    private TextField percentTableField;
    private Label percentTableLabel;
+   private Font header; // font used for header text
+   private double fieldWidth; // used to size TextFields
+   private double comboWidth; // used to size ComboBoxes
    // combo boxes that are updated with data
    private ComboBox<String> tableFarms;
    private ComboBox<String> tableYears;
    private ComboBox<String> tableMonths;
-   private ComboBox<String> reportFarms;
-   private ComboBox<String> reportYears;
-   private ComboBox<String> reportMonths;
+   private ComboBox<String> farmReportFarms;
+   private ComboBox<String> farmReportYears;
+   private ComboBox<String> annualReportYears;
+   private ComboBox<String> monthlyReportYears;
+   private ComboBox<String> monthlyReportMonths;
+   // fields for stats
+   private TextField monthMin;
+   private TextField monthMax;
+   private TextField farmWeightMin;
+   private TextField farmWeightMax;
+   private TextField farmWeightAvg;
+   private TextField farmPercentMin;
+   private TextField farmPercentMax;
+   private TextField idMin;
+   private TextField idMax;
+   private TextField timeWeightMin;
+   private TextField timeWeightMax;
+   private TextField timeWeightAvg;
+   private TextField timePercentMin;
+   private TextField timePercentMax;
+
 
 
    /**
@@ -117,8 +137,8 @@ public class RunFinalProject extends Application {
     * Adds the data to the table depending on what the user wants to be shown.
     * What is shown is determined from the controls above the table.
     */
-   private void displayTableData() {
-      table.getItems().clear();
+   private void displayMainTableData() {
+      mainTable.getItems().clear();
 
       if (yearList != null) {
          ArrayList<DayData> tableData = new ArrayList<>(); // stores all data
@@ -170,7 +190,7 @@ public class RunFinalProject extends Application {
             tableData.remove(dayData); // removes data from tableData
 
          for (DayData dayData : tableData)
-            table.getItems().add(dayData); // adds remaining data to table
+            mainTable.getItems().add(dayData); // adds remaining data to table
       }
 
       updateTableTotalWeight();
@@ -185,9 +205,11 @@ public class RunFinalProject extends Application {
       tableFarms.getItems().clear();
       tableYears.getItems().clear();
       tableMonths.getItems().clear();
-      reportFarms.getItems().clear();
-      reportYears.getItems().clear();
-      reportMonths.getItems().clear();
+      farmReportFarms.getItems().clear();
+      farmReportYears.getItems().clear();
+      annualReportYears.getItems().clear();
+      monthlyReportYears.getItems().clear();
+      monthlyReportMonths.getItems().clear();
 
       // adds an any option
       tableFarms.getItems().add(null);
@@ -195,36 +217,41 @@ public class RunFinalProject extends Application {
       tableMonths.getItems().add(null);
 
       // adds all years to the year combo boxes
-      for (YearData year : yearList) {
-         if (!tableYears.getItems().contains(String.valueOf(year.getYear()))) {
-            tableYears.getItems().add(String.valueOf(year.getYear()));
-            reportYears.getItems().add(String.valueOf(year.getYear()));
-         }
-      }
+      ObservableList<String> years = FXCollections.observableArrayList();
+      for (YearData year : yearList)
+         if (!years.contains(String.valueOf(year.getYear())))
+            years.add(String.valueOf(year.getYear()));
+
+      Collections.sort(years);
+      tableYears.getItems().addAll(years);
+      farmReportYears.getItems().addAll(years);
+      annualReportYears.getItems().addAll(years);
+      monthlyReportYears.getItems().addAll(years);
 
       // adds all months to the month combo boxes
-      for (YearData year : yearList) {
-         for (MonthData month : year.getMonthList()) {
-            if (!tableMonths.getItems()
-                  .contains(String.valueOf(month.getMonth()))) {
-               tableMonths.getItems().add(String.valueOf(month.getMonth()));
-               reportMonths.getItems().add(String.valueOf(month.getMonth()));
-            }
+      ObservableList<Months> months = FXCollections.observableArrayList();
+      for (YearData year : yearList)
+         for (MonthData month : year.getMonthList())
+            if (!months.contains(month.getMonth()))
+               months.add(month.getMonth());
 
-         }
+      Collections.sort(months);
+      for (Months month : months) {
+         tableMonths.getItems().add(String.valueOf(month));
+         monthlyReportMonths.getItems().add(String.valueOf(month));
       }
 
       // adds all farm id's to the farm id combo boxes
-      for (YearData year : yearList) {
-         for (MonthData month : year.getMonthList()) {
-            for (DayData day : month.getDayList()) {
-               if (!tableFarms.getItems().contains(day.getFarmID())) {
-                  tableFarms.getItems().add(day.getFarmID());
-                  reportFarms.getItems().add(day.getFarmID());
-               }
-            }
-         }
-      }
+      ObservableList<String> farms = FXCollections.observableArrayList();
+      for (YearData year : yearList)
+         for (MonthData month : year.getMonthList())
+            for (DayData day : month.getDayList())
+               if (!farms.contains(day.getFarmID()))
+                  farms.add(day.getFarmID());
+
+      Collections.sort(farms);
+      tableFarms.getItems().addAll(farms);
+      farmReportFarms.getItems().addAll(farms);
    }
 
 
@@ -235,25 +262,29 @@ public class RunFinalProject extends Application {
       // combo boxes for table tab
       tableFarms = new ComboBox<>();
       tableFarms.setPrefWidth(comboWidth);
-      tableFarms.setOnAction(a -> displayTableData());
+      tableFarms.setOnAction(a -> displayMainTableData());
 
       tableYears = new ComboBox<>();
       tableYears.setPrefWidth(comboWidth);
-      tableYears.setOnAction(a -> displayTableData());
+      tableYears.setOnAction(a -> displayMainTableData());
 
       tableMonths = new ComboBox<>();
       tableMonths.setPrefWidth(comboWidth);
-      tableMonths.setOnAction(a -> displayTableData());
+      tableMonths.setOnAction(a -> displayMainTableData());
 
-      // combo boxes for reports tab
-      reportFarms = new ComboBox<>();
-      reportFarms.setPrefWidth(comboWidth);
+      // combo boxes for report tab
+      farmReportFarms = new ComboBox<>();
+      farmReportYears = new ComboBox<>();
+      farmReportFarms.setPrefWidth(comboWidth);
+      farmReportYears.setPrefWidth(comboWidth);
 
-      reportYears = new ComboBox<>();
-      reportYears.setPrefWidth(comboWidth);
+      annualReportYears = new ComboBox<>();
+      annualReportYears.setPrefWidth(comboWidth);
 
-      reportMonths = new ComboBox<>();
-      reportMonths.setPrefWidth(comboWidth);
+      monthlyReportYears = new ComboBox<>();
+      monthlyReportMonths = new ComboBox<>();
+      monthlyReportYears.setPrefWidth(comboWidth);
+      monthlyReportMonths.setPrefWidth(comboWidth);
    }
 
 
@@ -262,7 +293,7 @@ public class RunFinalProject extends Application {
     */
    private void updateTableTotalWeight() {
       int tableTotal = 0;
-      for (DayData day : table.getItems())
+      for (DayData day : mainTable.getItems())
          tableTotal += day.getWeight();
 
       totalTableField.setText(String.valueOf(tableTotal));
@@ -292,7 +323,7 @@ public class RunFinalProject extends Application {
       try {
          File file = new File(fileName);
          PrintWriter writer = new PrintWriter(file);
-         
+
          // adds all data to the file
          writer.println("date,farm_id,weight");
          for (YearData year : yearList) {
@@ -309,9 +340,9 @@ public class RunFinalProject extends Application {
          writer.close();
 
       } catch (Exception e) { // shows an error dialog for bad file name
-         Alert alert = new Alert(AlertType.ERROR, "File name not allowed. File"
-               + " creation canceled.");
-         alert.setHeaderText("Error With File Name");
+         Alert alert = new Alert(AlertType.ERROR,
+               "File name not allowed. File creation canceled.");
+         alert.setHeaderText("Error With File Name " + fileName);
          alert.show();
       }
    }
@@ -325,6 +356,15 @@ public class RunFinalProject extends Application {
     */
    private Pane createHomePane() {
       BorderPane homePane = new BorderPane();
+
+      // button to stop program
+      Button exitButton = new Button("EXIT Program");
+      exitButton.setOnAction(a -> {
+         mainStage.close();
+         Platform.exit();
+      });
+      homePane.setTop(exitButton);
+      BorderPane.setMargin(exitButton, new Insets(20, 0, 0, 30));
 
       // the text to display on the home tab
       String homeString = "Welcome to the Milk Weights GUI!  Please select a "
@@ -378,8 +418,8 @@ public class RunFinalProject extends Application {
     * @return A table that can be displayed.
     */
    @SuppressWarnings("unchecked")
-   private TableView<DayData> createTable() {
-      table = new TableView<>();
+   private TableView<DayData> createMainTable() {
+      mainTable = new TableView<>();
 
       // creates the columns for the table
       TableColumn<DayData, LocalDate> dateCol = new TableColumn<>("Date");
@@ -394,10 +434,10 @@ public class RunFinalProject extends Application {
       farmCol.setCellValueFactory(new PropertyValueFactory<>("farmID"));
       weightCol.setCellValueFactory(new PropertyValueFactory<>("weight"));
 
-      table.getColumns().addAll(dateCol, farmCol, weightCol);
-      table.setMaxWidth(395);
+      mainTable.getColumns().addAll(dateCol, farmCol, weightCol);
+      mainTable.setMaxWidth(comboWidth * 3 + 15);
 
-      return table;
+      return mainTable;
    }
 
 
@@ -447,41 +487,333 @@ public class RunFinalProject extends Application {
       percentTableField.setPrefWidth(75);
       HBox totalWeight = new HBox(10, totalLabel, totalTableField,
             percentTableLabel, percentTableField);
-      totalWeight.setAlignment(Pos.CENTER_RIGHT);
-      totalWeight.setPadding(new Insets(5, 80, 5, 0));
-
-      // label and fields for bottom options
-      Label addLabel = new Label("Add day:");
-      TextField dateField = new TextField();
-      dateField.setPrefWidth(comboWidth);
-      dateField.setPromptText("Date");
-      TextField farmField = new TextField();
-      farmField.setPromptText("Farm ID");
-      farmField.setPrefWidth(comboWidth);
-      TextField weightField = new TextField();
-      weightField.setPromptText("Weight");
-      weightField.setPrefWidth(comboWidth);
-
-      // button to enter day into ds
-      Button enterButton = new Button("Enter");
-      enterButton.setOnAction(a -> {
-         dateField.clear();
-         farmField.clear();
-         weightField.clear();
-      });
-
-      // creating and formatting bottom options
-      HBox bottomAdd = new HBox(10, addLabel, dateField, farmField, weightField,
-            enterButton);
-      bottomAdd.setAlignment(Pos.CENTER);
+      totalWeight.setAlignment(Pos.CENTER);
+      totalWeight.setPadding(new Insets(5, 0, 0, 0));
 
       // adding to table tab pane
-      VBox tablePane =
-            new VBox(topOptions, createTable(), totalWeight, bottomAdd);
+      VBox tablePane = new VBox(topOptions, createMainTable(), totalWeight);
       tablePane.setPadding(new Insets(10, 10, 10, 10));
       tablePane.setAlignment(Pos.CENTER);
 
       return tablePane;
+   }
+
+
+   @SuppressWarnings("unchecked")
+   private TableView<FarmReportRow> createFarmReportTable() {
+      TableView<FarmReportRow> table = new TableView<>();
+
+      TableColumn<FarmReportRow, Months> monthCol = new TableColumn<>("Month");
+      monthCol.setPrefWidth(comboWidth);
+      TableColumn<FarmReportRow, Integer> weightCol =
+            new TableColumn<>("Total Weight");
+      weightCol.setPrefWidth(comboWidth);
+      TableColumn<FarmReportRow, Double> percentCol =
+            new TableColumn<>("% of Month");
+      percentCol.setPrefWidth(comboWidth);
+
+      monthCol.setCellValueFactory(new PropertyValueFactory<>("month"));
+      weightCol.setCellValueFactory(new PropertyValueFactory<>("totalWeight"));
+      percentCol
+            .setCellValueFactory(new PropertyValueFactory<>("percentTotal"));
+
+      table.getColumns().addAll(monthCol, weightCol, percentCol);
+      table.setMaxWidth(comboWidth * 3 + 15);
+
+      return table;
+   }
+
+
+   @SuppressWarnings("unchecked")
+   private TableView<TimeReportRow> createTimeReportTable(String type) {
+      TableView<TimeReportRow> table = new TableView<>();
+
+      TableColumn<TimeReportRow, String> farmCol = new TableColumn<>("Farm ID");
+      farmCol.setPrefWidth(comboWidth);
+      TableColumn<TimeReportRow, Integer> weightCol =
+            new TableColumn<>("Total Weight");
+      weightCol.setPrefWidth(comboWidth);
+      TableColumn<TimeReportRow, Double> percentCol =
+            new TableColumn<>("% of " + type);
+      percentCol.setPrefWidth(comboWidth);
+
+      farmCol.setCellValueFactory(new PropertyValueFactory<>("farmID"));
+      weightCol.setCellValueFactory(new PropertyValueFactory<>("totalWeight"));
+      percentCol
+            .setCellValueFactory(new PropertyValueFactory<>("percentTotal"));
+
+      table.getColumns().addAll(farmCol, weightCol, percentCol);
+      table.setMaxWidth(comboWidth * 3 + 15);
+
+      return table;
+   }
+
+
+   private Pane createFarmReportPane() {
+      // farm report tab
+      Label farmLabel = new Label("Farm:");
+      Label yearLabel = new Label("Year:");
+      farmLabel.setFont(header);
+      yearLabel.setFont(header);
+      Button farmEnter = new Button("Enter");
+      TableView<FarmReportRow> farmTable = createFarmReportTable();
+      farmEnter.setOnAction(a -> {
+         farmTable.getItems().clear();
+         if (farmReportFarms.getValue() != null
+               && farmReportYears.getValue() != null) {
+            String farmID = farmReportFarms.getValue();
+            YearData yearData =
+                  getYear(Integer.valueOf(farmReportYears.getValue()));
+
+            ArrayList<FarmReportRow> monthList = new ArrayList<>();
+            for (MonthData month : yearData.getMonthList()) {
+               FarmReportRow farm = new FarmReportRow(month.getMonth(),
+                     month.getTotalMonthWeight());
+               for (DayData day : month.getDayList())
+                  if (day.getFarmID().equals(farmID))
+                     farm.addWeight(day.getWeight());
+
+               monthList.add(farm);
+            }
+
+            farmTable.getItems().addAll(monthList);
+
+            // calculating stats
+            int sumWeights = 0;
+            FarmReportRow minRow = null;
+            FarmReportRow maxRow = null;
+            int minWeight = Integer.MAX_VALUE;
+            int maxWeight = -1;
+            for (FarmReportRow row : farmTable.getItems()) {
+               int weight = row.getTotalWeight();
+               sumWeights += weight;
+               if (weight < minWeight) {
+                  minRow = row;
+                  minWeight = weight;
+               }
+               if (weight > maxWeight) {
+                  maxRow = row;
+                  maxWeight = weight;
+               }
+            }
+            monthMin.setText(minRow.getMonth().toString());
+            farmWeightMin.setText(String.valueOf(minRow.getTotalWeight()));
+            farmPercentMin.setText(String.valueOf(minRow.getPercentTotal()));
+            monthMax.setText(maxRow.getMonth().toString());
+            farmWeightMax.setText(String.valueOf(maxRow.getTotalWeight()));
+            farmPercentMax.setText(String.valueOf(maxRow.getPercentTotal()));
+            farmWeightAvg.setText(
+                  String.valueOf(sumWeights / farmTable.getItems().size()));
+         }
+      });
+      HBox farmBox = new HBox(10, farmLabel, farmReportFarms, yearLabel,
+            farmReportYears, farmEnter);
+      farmBox.setAlignment(Pos.CENTER);
+
+      GridPane farmStats = new GridPane();
+      Label farmMin = new Label("Min:");
+      Label farmMax = new Label("Max:");
+      Label farmAvg = new Label("Avg:");
+      monthMin = new TextField();
+      monthMax = new TextField();
+      farmWeightMin = new TextField();
+      farmWeightMax = new TextField();
+      farmWeightAvg = new TextField();
+      farmPercentMin = new TextField();
+      farmPercentMax = new TextField();
+      monthMin.setPrefWidth(fieldWidth);
+      monthMax.setPrefWidth(fieldWidth);
+      farmWeightMin.setPrefWidth(fieldWidth);
+      farmWeightMax.setPrefWidth(fieldWidth);
+      farmWeightAvg.setPrefWidth(fieldWidth);
+      farmPercentMin.setPrefWidth(fieldWidth);
+      farmPercentMax.setPrefWidth(fieldWidth);
+
+      farmStats.addColumn(0, farmMin, farmMax, farmAvg);
+      farmStats.addColumn(1, monthMin, monthMax);
+      farmStats.addColumn(2, farmWeightMin, farmWeightMax, farmWeightAvg);
+      farmStats.addColumn(3, farmPercentMin, farmPercentMax);
+      farmStats.setHgap(5);
+      farmStats.setVgap(5);
+      farmStats.setAlignment(Pos.CENTER);
+
+      VBox farmReportPane = new VBox(10, farmBox, farmTable, farmStats);
+      farmReportPane.setPadding(new Insets(10, 10, 10, 10));
+      farmReportPane.setAlignment(Pos.CENTER);
+
+      return farmReportPane;
+   }
+
+
+   private Pane createAnnualReportPane() {
+      Label yearAnnualLabel = new Label("Year:");
+      yearAnnualLabel.setFont(header);
+      Button annualEnter = new Button("Enter");
+      TableView<TimeReportRow> annualTable = createTimeReportTable("Year");
+      annualEnter.setOnAction(a -> {
+         annualTable.getItems().clear();
+         if (annualReportYears.getValue() != null) {
+            YearData yearData =
+                  getYear(Integer.valueOf(annualReportYears.getValue()));
+
+            ObservableList<String> farmIDs = farmReportFarms.getItems();
+            ArrayList<TimeReportRow> farmList = new ArrayList<>();
+
+            for (String farmID : farmIDs) {
+               TimeReportRow farm =
+                     new TimeReportRow(farmID, yearData.getTotalYearWeight());
+               farmList.add(farm);
+            }
+
+            for (MonthData month : yearData.getMonthList())
+               for (DayData day : month.getDayList())
+                  for (TimeReportRow farm : farmList)
+                     if (day.getFarmID().equals(farm.getFarmID()))
+                        farm.addWeight(day.getWeight());
+
+            annualTable.getItems().addAll(farmList);
+         }
+      });
+      HBox annualBox =
+            new HBox(10, yearAnnualLabel, annualReportYears, annualEnter);
+      annualBox.setAlignment(Pos.CENTER);
+
+      VBox annualReportPane = new VBox(10, annualBox, annualTable);
+      annualReportPane.setPadding(new Insets(10, 10, 10, 10));
+      annualReportPane.setAlignment(Pos.CENTER);
+
+      return annualReportPane;
+   }
+
+
+   private Pane createMonthlyReportPane() {
+      Label yearMonthlyLabel = new Label("Year:");
+      Label monthMonthlyLabel = new Label("Month:");
+      yearMonthlyLabel.setFont(header);
+      monthMonthlyLabel.setFont(header);
+      Button monthlyEnter = new Button("Enter");
+      TableView<TimeReportRow> monthlyTable = createTimeReportTable("Month");
+      monthlyEnter.setOnAction(a -> {
+         monthlyTable.getItems().clear();
+         if (monthlyReportYears.getValue() != null
+               && monthlyReportMonths.getValue() != null) {
+            YearData yearData =
+                  getYear(Integer.valueOf(monthlyReportYears.getValue()));
+            MonthData monthData = null;
+            for (MonthData month : yearData.getMonthList()) {
+               String monthName = month.getMonth().toString();
+               if (monthName.equals(monthlyReportMonths.getValue()))
+                  monthData = month;
+            }
+
+            ObservableList<String> farmIDs = farmReportFarms.getItems();
+            ArrayList<TimeReportRow> farmList = new ArrayList<>();
+
+            for (String farmID : farmIDs) {
+               TimeReportRow farm =
+                     new TimeReportRow(farmID, yearData.getTotalYearWeight());
+               farmList.add(farm);
+            }
+
+            for (DayData day : monthData.getDayList())
+               for (TimeReportRow farm : farmList)
+                  if (day.getFarmID().equals(farm.getFarmID()))
+                     farm.addWeight(day.getWeight());
+
+            monthlyTable.getItems().addAll(farmList);
+
+            // calculating stats
+            int sumWeights = 0;
+            TimeReportRow minRow = null;
+            TimeReportRow maxRow = null;
+            int minWeight = Integer.MAX_VALUE;
+            int maxWeight = -1;
+            for (TimeReportRow row : monthlyTable.getItems()) {
+               int weight = row.getTotalWeight();
+               sumWeights += weight;
+               if (weight < minWeight) {
+                  minRow = row;
+                  minWeight = weight;
+               }
+               if (weight > maxWeight) {
+                  maxRow = row;
+                  maxWeight = weight;
+               }
+            }
+            idMin.setText(minRow.getFarmID());
+            timeWeightMin.setText(String.valueOf(minRow.getTotalWeight()));
+            timePercentMin.setText(String.valueOf(minRow.getPercentTotal()));
+            idMax.setText(maxRow.getFarmID());
+            timeWeightMax.setText(String.valueOf(maxRow.getTotalWeight()));
+            timePercentMax.setText(String.valueOf(maxRow.getPercentTotal()));
+            timeWeightAvg.setText(
+                  String.valueOf(sumWeights / monthlyTable.getItems().size()));
+         }
+      });
+      HBox monthlyBox = new HBox(10, yearMonthlyLabel, monthlyReportYears,
+            monthMonthlyLabel, monthlyReportMonths, monthlyEnter);
+      monthlyBox.setAlignment(Pos.CENTER);
+
+      GridPane monthlyStats = new GridPane();
+      Label monthlyMin = new Label("Min:");
+      Label monthlyMax = new Label("Max:");
+      Label monthlyAvg = new Label("Avg:");
+      idMin = new TextField();
+      idMax = new TextField();
+      timeWeightMin = new TextField();
+      timeWeightMax = new TextField();
+      timeWeightAvg = new TextField();
+      timePercentMin = new TextField();
+      timePercentMax = new TextField();
+      idMin.setPrefWidth(fieldWidth);
+      idMax.setPrefWidth(fieldWidth);
+      timeWeightMin.setPrefWidth(fieldWidth);
+      timeWeightMax.setPrefWidth(fieldWidth);
+      timeWeightAvg.setPrefWidth(fieldWidth);
+      timePercentMin.setPrefWidth(fieldWidth);
+      timePercentMax.setPrefWidth(fieldWidth);
+
+      monthlyStats.addColumn(0, monthlyMin, monthlyMax, monthlyAvg);
+      monthlyStats.addColumn(1, idMin, idMax);
+      monthlyStats.addColumn(2, timeWeightMin, timeWeightMax, timeWeightAvg);
+      monthlyStats.addColumn(3, timePercentMin, timePercentMax);
+      monthlyStats.setHgap(5);
+      monthlyStats.setVgap(5);
+      monthlyStats.setAlignment(Pos.CENTER);
+
+      VBox monthlyReportPane =
+            new VBox(10, monthlyBox, monthlyTable, monthlyStats);
+      monthlyReportPane.setPadding(new Insets(10, 10, 10, 10));
+      monthlyReportPane.setAlignment(Pos.CENTER);
+
+      return monthlyReportPane;
+   }
+
+
+   /**
+    * Creates the pane for the Reports tab. This pane contains all the
+    * information and controls for that tab.
+    * 
+    * @return The pane for the Reports tab.
+    */
+   private TabPane createReportsPane() {
+      // farm report tab
+      Tab farmTab = new Tab("Farm Report");
+      farmTab.setContent(createFarmReportPane());
+
+      // annual report tab
+      Tab annualTab = new Tab("Annual Report");
+      annualTab.setContent(createAnnualReportPane());
+
+      // monthly report tab
+      Tab monthlyTab = new Tab("Montly Report");
+      monthlyTab.setContent(createMonthlyReportPane());
+
+      // adds the individual tabs to the TabPane
+      TabPane reportPane = new TabPane(farmTab, annualTab, monthlyTab);
+      reportPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
+
+      return reportPane;
    }
 
 
@@ -511,8 +843,6 @@ public class RunFinalProject extends Application {
             yearData.addMonthData(file, yearMonth[1]);
          }
       }
-
-      updateComboBoxes();
    }
 
 
@@ -527,37 +857,50 @@ public class RunFinalProject extends Application {
 
       // creates a FileChooser for selecting a file in the OS file manager
       FileChooser fileChooser = new FileChooser();
-      fileChooser.setTitle("Select CSV File");
+      fileChooser.setTitle("Select CSV Files");
       fileChooser.getExtensionFilters()
             .addAll(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
 
-      Label fileLabel = new Label("Selected File:");
+      Label fileLabel = new Label("Selected Files:");
       fileLabel.setFont(header);
       TextField fileField = new TextField();
-      fileField.setPrefWidth(fieldWidth);
+      fileField.setPrefWidth(300);
       fileField.setEditable(false);
 
       // a button that opens the FileChooser dialog
-      Button fileButton = new Button("Select File");
-      fileButton.setOnAction(a -> {
-         inputFile = fileChooser.showOpenDialog(mainStage);
-         if (inputFile != null) {
-            fileField.setText(inputFile.getName()); // displays file name
+      Button fileButton = new Button("Select Files");
+      fileButton.setOnAction(a -> { // stores files
+         List<File> tempFiles = fileChooser.showOpenMultipleDialog(mainStage);
+
+         if (tempFiles != null)
+            inputFiles = tempFiles;
+
+         if (inputFiles != null) {
+            String fileNames = "";
+
+            for (File file : inputFiles) { // gets all file names
+               String name = file.getName();
+               name = name.substring(0, name.length() - 4);
+               fileNames = fileNames.concat(name + ", ");
+            }
+
+            fileNames = fileNames.substring(0, fileNames.length() - 2);
+            fileField.setText(fileNames); // displays file name
          }
       });
 
-      Button saveButton = new Button("Save File");
+      Button addButton = new Button("Add Files");
 
-      // creates confirmation popup when saving file
-      saveButton.setOnAction(a -> {
-         if (inputFile != null) {
+      // creates confirmation dialog and adds files
+      addButton.setOnAction(a -> {
+         if (inputFiles != null) {
             Alert alert = new Alert(AlertType.CONFIRMATION);
 
             // formatting popup
             alert.setHeaderText("Save File Confirmation");
-            alert.setContentText("Saving a new file will overwrite previous "
-                  + "data if the year and month are the same. Would you still "
-                  + "like to continue?");
+            alert.setContentText("Saving new files will overwrite a previous "
+                  + "day if the date and farm id are the same. Would you still"
+                  + " like to continue?");
             alert.getDialogPane().setMinSize(Region.USE_PREF_SIZE,
                   Region.USE_PREF_SIZE);
 
@@ -570,102 +913,30 @@ public class RunFinalProject extends Application {
             Optional<ButtonType> result = alert.showAndWait();
             if (result.get() == noButton) {
                alert.close();
-               fileField.setText("Save Canceled");
-               inputFile = null;
+               return;
             }
 
-            if (inputFile != null) {
-               addFile(inputFile);
-               inputFile = null;
-               fileField.setText("File Saved");
-               displayTableData();
+            if (inputFiles != null) { // adds files and updates
+               for (File file : inputFiles)
+                  addFile(file); // adds all files
+
+               inputFiles = null;
+               fileField.setText("Files Saved");
+               updateComboBoxes();
+               displayMainTableData();
             }
          }
       });
 
       // formatting GridPane
       pane.add(fileButton, 0, 0);
-      pane.addRow(1, fileLabel, fileField, saveButton);
+      pane.addRow(1, fileLabel, fileField, addButton);
       pane.setHgap(10);
       pane.setVgap(10);
       pane.setPadding(new Insets(40, 10, 10, 10));
       pane.setAlignment(Pos.TOP_CENTER);
 
       return pane;
-   }
-
-
-   /**
-    * Creates the pane for the Reports tab. This pane contains all the
-    * information and controls for that tab.
-    * 
-    * @return The pane for the Reports tab.
-    */
-   private Pane createReportsPane() {
-      VBox reportBox = new VBox();
-      GridPane grid = new GridPane();
-
-      // creating and formatting all Labels
-      Label reportLabel = new Label("Report");
-      reportLabel.setFont(header);
-      Label selectLabel = new Label("Select");
-      selectLabel.setFont(header);
-      Label totalLabel = new Label("Total Weight");
-      totalLabel.setFont(header);
-      Label percentLabel = new Label("Percent of total");
-      percentLabel.setFont(header);
-
-      Label farmLabel = new Label("Farm:");
-      Label yearLabel = new Label("Year:");
-      Label monthLabel = new Label("Month:");
-
-      // creating and formatting all TextFields
-      TextField farmTotalField = new TextField();
-      farmTotalField.setEditable(false);
-      farmTotalField.setPrefWidth(fieldWidth);
-      TextField farmPercentField = new TextField();
-      farmPercentField.setEditable(false);
-      farmPercentField.setPrefWidth(fieldWidth);
-
-      TextField yearTotalField = new TextField();
-      yearTotalField.setEditable(false);
-      yearTotalField.setPrefWidth(fieldWidth);
-      TextField yearPercentField = new TextField();
-      yearPercentField.setEditable(false);
-      yearPercentField.setPrefWidth(fieldWidth);
-
-      TextField monthTotalField = new TextField();
-      monthTotalField.setPrefWidth(fieldWidth);
-      monthTotalField.setEditable(false);
-      TextField monthPercentField = new TextField();
-      monthPercentField.setEditable(false);
-      monthPercentField.setPrefWidth(fieldWidth);
-
-      // adding controls to GridPane
-      grid.addRow(0, reportLabel, selectLabel, totalLabel, percentLabel);
-      grid.addRow(1, farmLabel, reportFarms, farmTotalField, farmPercentField);
-      grid.addRow(2, yearLabel, reportYears, yearTotalField, yearPercentField);
-      grid.addRow(3, monthLabel, reportMonths, monthTotalField,
-            monthPercentField);
-
-      // formatting GridPane
-      GridPane.setHalignment(selectLabel, HPos.CENTER);
-      GridPane.setHalignment(totalLabel, HPos.CENTER);
-      GridPane.setHalignment(percentLabel, HPos.CENTER);
-      grid.setHgap(15);
-      grid.setVgap(10);
-
-      Label range = new Label("Select date range");
-      range.setFont(header);
-
-      grid.setAlignment(Pos.TOP_CENTER);
-
-      reportBox.getChildren().addAll(grid, range);
-      reportBox.setSpacing(40);
-      reportBox.setPadding(new Insets(40, 10, 10, 10));
-      reportBox.setAlignment(Pos.TOP_CENTER);
-
-      return reportBox;
    }
 
 
@@ -679,25 +950,26 @@ public class RunFinalProject extends Application {
       this.mainStage = mainStage;
       header = new Font(14);
       fieldWidth = 100;
-      comboWidth = 125;
+      comboWidth = 100;
+      inputFiles = null;
 
       // creates all the tabs
       Tab homeTab = new Tab("   Home   ");
       Tab tableTab = new Tab("   Table   ");
-      Tab inputFilesTab = new Tab("Input Files");
       Tab reportsTab = new Tab("  Reports  ");
+      Tab inputFilesTab = new Tab("Input Files");
 
       createComboBoxes();
 
       // adds the panes to each tab
       homeTab.setContent(createHomePane());
       tableTab.setContent(createTablePane());
-      inputFilesTab.setContent(createInputFilesPane());
       reportsTab.setContent(createReportsPane());
+      inputFilesTab.setContent(createInputFilesPane());
 
       // adds the individual tabs to the TabPane
       TabPane tabPane =
-            new TabPane(homeTab, tableTab, inputFilesTab, reportsTab);
+            new TabPane(homeTab, tableTab, reportsTab, inputFilesTab);
       tabPane.setTabClosingPolicy(TabClosingPolicy.UNAVAILABLE);
 
       // formats the stage and shows it to the user

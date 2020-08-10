@@ -50,7 +50,8 @@ class MonthData {
       try {
          Scanner reader = new Scanner(file);
          reader.nextLine();
-         Boolean failed = false; // whether or not it failed to create day
+         Boolean failed = false; // whether or not it failed to create a day
+         int failedLines = 0; // how many lines failed
 
          while (reader.hasNextLine()) { // goes through the file
             String[] line = reader.nextLine().split(","); // separates file line
@@ -60,27 +61,30 @@ class MonthData {
                // stores info from the line of the file
                String stringDay = date.substring(date.lastIndexOf("-"));
                int day = Integer.parseInt(stringDay);
-               String farmID = line[1];
+               String farmID = line[1].trim();
+               if(farmID.equals(""))
+                  throw new Exception();
                int weight = Integer.parseInt(line[2]);
 
                addDay(date, day, farmID, weight);
 
             } catch (Exception e) { // catches when data is not right
                failed = true;
+               failedLines++;
             }
          }
 
+         reader.close();
+
          if (failed) { // shows error dialog
-            Alert alert = new Alert(AlertType.ERROR, "One or more lines of data"
-                  + " had errors and were skipped. All other lines have still"
-                  + " been added.");
-            alert.setHeaderText("Error Loading Data");
+            Alert alert = new Alert(AlertType.ERROR, failedLines + " lines of "
+                  + "data had errors and were skipped. All other lines were "
+                  + "still added.");
+            alert.setHeaderText("Error Loading " + file.getName());
             alert.getDialogPane().setMinSize(Region.USE_PREF_SIZE,
                   Region.USE_PREF_SIZE);
             alert.show();
          }
-
-         reader.close();
 
       } catch (Exception e) {
          System.out.println("Error: Unknown\n");
@@ -146,6 +150,42 @@ class MonthData {
       return totalMonthWeight;
    }
 
+   
+   /**
+    * Searches for a day of data in this month.
+    * 
+    * @param day The day to search for.
+    * @return True if this month contains the day, false otherwise.
+    */
+   boolean contains(DayData day) {
+      for(DayData currentDay : dayList)
+         if(currentDay.isEqualTo(day))
+            return true;
+      
+      return false;
+   }
+   
+   
+   /**
+    * Replaces the weight of the day in this list with the new one.
+    * 
+    * @param newDay The new day that should be in this month instead.
+    */
+   void replaceDay(DayData newDay) {
+      for(DayData currentDay : dayList)
+         if(currentDay.isEqualTo(newDay)) {
+            int oldWeight = currentDay.getWeight();
+            int newWeight = newDay.getWeight();
+            
+            totalMonthWeight -= oldWeight;
+            totalMonthWeight += newWeight;
+            
+            currentDay.setWeight(newWeight);
+            
+            return;
+         }
+   }
+   
 
    /**
     * Adds a day's worth of data to the list.
@@ -156,6 +196,13 @@ class MonthData {
     * @param weight The weight sold for on this day.
     */
    void addDay(String date, int day, String farmID, int weight) {
+      DayData newDay = new DayData(date, day, farmID, weight);
+      
+      if(contains(newDay)) {
+         replaceDay(newDay);
+         return;
+      }
+      
       dayList.add(new DayData(date, day, farmID, weight));
 
       totalMonthWeight += weight;

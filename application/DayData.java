@@ -39,7 +39,7 @@ public class DayData {
     * @param farmID The id of what farm has this day's weight.
     * @param weight The weight that was sold on this day.
     */
-   public DayData(String date, int day, String farmID, int weight) {
+   DayData(String date, int day, String farmID, int weight) {
       this.date = LocalDate.parse(date, FORMAT);
       this.day = day;
       this.farmID = farmID;
@@ -62,7 +62,7 @@ public class DayData {
     * 
     * @return The day field.
     */
-   public int getDay() {
+   int getDay() {
       return day;
    }
 
@@ -84,6 +84,34 @@ public class DayData {
     */
    public int getWeight() {
       return weight;
+   }
+
+   
+   /**
+    * Sets a new weight.
+    * 
+    * @param newWeight The new weight to set this day's weight to.
+    */
+   void setWeight(int newWeight) {
+      weight = newWeight;
+   }
+   
+
+   /**
+    * Compares this day of data to another.
+    * 
+    * @param day The day to compare this day to.
+    * @return True if the two days have the same farmID and date, false
+    *         otherwise.
+    */
+   boolean isEqualTo(DayData day) {
+      if (!farmID.equals(day.getFarmID()))
+         return false;
+
+      if (!date.equals(day.getDate()))
+         return false;
+
+      return true;
    }
 
 
