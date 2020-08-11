@@ -1,11 +1,13 @@
 /**
  * Project: Milk Weights Final Project
- * Files: project.zip (RunFinalProject.java, YearData.java, MonthData.java,
- * DayData.java, Months.java, cheeseLogo.jpg, README.txt)
+ * Files: RunFinalProject.java, YearData.java, MonthData.java,
+ * DayData.java, FarmReportRow.java, TimeReportRow.java, Months.java,
+ * cheeseLogo.jpg
  * 
  * Description: This is the final project for CS 400 Summer 2020. This program
  * is an interactive data visualizer that utilizes a GUI to display the data.
- * Through the GUI the user can add, copy, and change data.
+ * Through the GUI the user can add data from CSV files and display that data on
+ * tables. The tables are interactive and give stats on the data.
  * 
  * Author: Alec Osmak
  * Email: osmak@wisc.edu
@@ -17,38 +19,37 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Stores the data for a day in a month.
+ * Stores the data for a day in a month for a single farm. Gets all data from a
+ * single line in the input CSV files.
  * 
  * @author Alec Osmak
  */
 public class DayData {
 
-   private final DateTimeFormatter FORMAT =
+   private final DateTimeFormatter FORMAT = // formats date string
          DateTimeFormatter.ofPattern("yyyy-M-d");
-   private LocalDate date;
-   private int day;
-   private String farmID;
-   private int weight;
-
+   private LocalDate date; // stores date
+   private int day; // day in month
+   private String farmID; // name of this farm
+   private int weight; // weight sold on this day
 
    /**
-    * Creates a new instance of a day's worth of data and initialize the fields.
+    * Creates a new instance of a day's worth of data and initializes fields.
     * 
     * @param date   The String of the complete date.
     * @param day    The day in the month it is.
-    * @param farmID The id of what farm has this day's weight.
+    * @param farmID The farm that has this day's weight.
     * @param weight The weight that was sold on this day.
     */
    DayData(String date, int day, String farmID, int weight) {
-      this.date = LocalDate.parse(date, FORMAT);
+      this.date = LocalDate.parse(date, FORMAT); // converts string to date
       this.day = day;
       this.farmID = farmID;
       this.weight = weight;
    }
 
-
    /**
-    * Returns the date for this day as a Date object.
+    * Gets the complete date for this day as a Date object.
     * 
     * @return The date field.
     */
@@ -56,9 +57,8 @@ public class DayData {
       return date;
    }
 
-
    /**
-    * Returns the day in the month it is as an int.
+    * Gets the day in the month it is as an int.
     * 
     * @return The day field.
     */
@@ -66,9 +66,8 @@ public class DayData {
       return day;
    }
 
-
    /**
-    * Returns the farm ID for this day's data.
+    * Gets the farm id for this day's data.
     * 
     * @return The farmID field.
     */
@@ -76,9 +75,8 @@ public class DayData {
       return farmID;
    }
 
-
    /**
-    * The weight this farm sold on this day.
+    * Gets the weight this farm sold on this day.
     * 
     * @return The weight field.
     */
@@ -86,19 +84,17 @@ public class DayData {
       return weight;
    }
 
-   
    /**
-    * Sets a new weight.
+    * Sets a new weight for this day.
     * 
-    * @param newWeight The new weight to set this day's weight to.
+    * @param newWeight The new weight to set.
     */
    void setWeight(int newWeight) {
       weight = newWeight;
    }
-   
 
    /**
-    * Compares this day of data to another.
+    * Compares this day of data to another based on farm id and date.
     * 
     * @param day The day to compare this day to.
     * @return True if the two days have the same farmID and date, false
@@ -113,6 +109,5 @@ public class DayData {
 
       return true;
    }
-
 
 }

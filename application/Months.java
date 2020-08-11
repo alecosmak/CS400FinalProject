@@ -1,11 +1,13 @@
 /**
  * Project: Milk Weights Final Project
- * Files: project.zip (RunFinalProject.java, YearData.java, MonthData.java,
- * DayData.java, Months.java, cheeseLogo.jpg, README.txt)
+ * Files: RunFinalProject.java, YearData.java, MonthData.java,
+ * DayData.java, FarmReportRow.java, TimeReportRow.java, Months.java,
+ * cheeseLogo.jpg
  * 
  * Description: This is the final project for CS 400 Summer 2020. This program
  * is an interactive data visualizer that utilizes a GUI to display the data.
- * Through the GUI the user can add, copy, and change data.
+ * Through the GUI the user can add data from CSV files and display that data on
+ * tables. The tables are interactive and give stats on the data.
  * 
  * Author: Alec Osmak
  * Email: osmak@wisc.edu

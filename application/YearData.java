@@ -1,11 +1,13 @@
 /**
  * Project: Milk Weights Final Project
- * Files: project.zip (RunFinalProject.java, YearData.java, MonthData.java,
- * DayData.java, Months.java, cheeseLogo.jpg, README.txt)
+ * Files: RunFinalProject.java, YearData.java, MonthData.java,
+ * DayData.java, FarmReportRow.java, TimeReportRow.java, Months.java,
+ * cheeseLogo.jpg
  * 
  * Description: This is the final project for CS 400 Summer 2020. This program
  * is an interactive data visualizer that utilizes a GUI to display the data.
- * Through the GUI the user can add, copy, and change data.
+ * Through the GUI the user can add data from CSV files and display that data on
+ * tables. The tables are interactive and give stats on the data.
  * 
  * Author: Alec Osmak
  * Email: osmak@wisc.edu
@@ -22,7 +24,8 @@ import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.Region;
 
 /**
- * Stores the data for a year. Can adds months from a file.
+ * Stores the data for a year. Adds months from CSV file. Gets year from file
+ * name.
  * 
  * @author Alec Osmak
  */
@@ -35,9 +38,9 @@ class YearData {
 
 
    /**
-    * Creates a new year from a file for a month. Also initializes fields.
+    * Creates a new year from a file for a month and initializes fields.
     * 
-    * @param file      The file for a month that is part of a new year.
+    * @param file      The CSV file for the month.
     * @param yearMonth The year and month of the file.
     */
    YearData(File file, String[] yearMonth) {
@@ -46,12 +49,12 @@ class YearData {
       numMonths = 0;
       totalYearWeight = 0;
 
-      addMonthData(file, yearMonth[1]);
+      addMonthData(file, yearMonth[1]); // adds month to the year
    }
 
 
    /**
-    * Returns the list of months for this year.
+    * Returns the data for all months in this year.
     * 
     * @return The list of months.
     */
@@ -61,25 +64,9 @@ class YearData {
 
 
    /**
-    * Finds and returns a month of data from its month name in the enum.
+    * Returns the year that it is.
     * 
-    * @param month The name of the month.
-    * @return The month of data found, or null if the month doesn't exist.
-    */
-   MonthData getMonthData(Months month) {
-      for (MonthData monthData : monthList) {
-         if (monthData.getMonth() == month)
-            return monthData;
-      }
-
-      return null;
-   }
-
-
-   /**
-    * Returns the year that this is.
-    * 
-    * @return The year it is.
+    * @return The year field.
     */
    int getYear() {
       return year;
@@ -87,7 +74,7 @@ class YearData {
 
 
    /**
-    * Returns how many months this year currently has listed.
+    * Returns how many months of data this year has.
     * 
     * @return The number of months in this year.
     */
@@ -107,22 +94,37 @@ class YearData {
 
 
    /**
+    * Finds and returns a month of data from its name.
+    * 
+    * @param month The month to search for.
+    * @return The month of data found, or null if the month doesn't exist.
+    */
+   MonthData getMonthData(Months month) {
+      for (MonthData monthData : monthList) // goes through all months
+         if (monthData.getMonth() == month)
+            return monthData;
+
+      return null;
+   }
+
+
+   /**
     * Adds a month to this year from a file and the month.
     * 
     * @param file     The file that contains a month of data.
     * @param numMonth A string value for the numerical month.
     */
    void addMonthData(File file, String numMonth) {
-      // gets the name of the month from its integer value
-      Months month = Months.values()[Integer.parseInt(numMonth) - 1];
+      // turns int month as String into Months value
+      Months month = Months.values()[Integer.valueOf(numMonth) - 1];
 
-      for (MonthData existingMonth : monthList) {
-         if (existingMonth.getMonth() == month) {
-            addToMonth(existingMonth, file);
-            return;
-         }
+      MonthData existingMonth = getMonthData(month);
+      if(existingMonth != null) { // checks if month already exists
+         addToMonth(existingMonth, file);
+         return;
       }
-
+      
+      // creates new month
       MonthData newMonth = new MonthData(file, month);
       monthList.add(newMonth);
 
@@ -141,21 +143,25 @@ class YearData {
    void addToMonth(MonthData month, File file) {
       try {
          Scanner reader = new Scanner(file);
-         reader.nextLine();
+         reader.nextLine(); // skips first line
          Boolean failed = false; // whether or not it failed to create a day
          int failedLines = 0; // how many lines failed
 
          while (reader.hasNextLine()) { // goes through the file
             String[] line = reader.nextLine().split(","); // separates file line
-            String date = line[0]; // separates date
+            String date = line[0]; // gets date value
 
             try {
                // stores info from the line of the file
                String stringDay = date.substring(date.lastIndexOf("-"));
                int day = Integer.parseInt(stringDay);
-               String farmID = line[1];
+               
+               String farmID = line[1].trim();
                int weight = Integer.parseInt(line[2]);
 
+               if (farmID.equals("")) // filters out empty string
+                  throw new Exception();
+               
                month.addDay(date, day, farmID, weight);
 
             } catch (Exception e) { // catches when data is not right
@@ -176,14 +182,14 @@ class YearData {
             alert.show();
          }
 
-      } catch (Exception e) {
+      } catch (Exception e) { // catches rest of exceptions (shouldn't happen)
          System.out.println("Error: Unknown\n");
          e.printStackTrace();
       }
-      
+
       // recalculates total weight for the year
       totalYearWeight = 0;
-      for(MonthData currentMonth : monthList)
+      for (MonthData currentMonth : monthList)
          totalYearWeight += currentMonth.getTotalMonthWeight();
    }
 
