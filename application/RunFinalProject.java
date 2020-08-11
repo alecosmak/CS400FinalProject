@@ -37,6 +37,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -888,17 +889,34 @@ public class RunFinalProject extends Application {
       Tab monthlyTab = new Tab("Montly Report");
       Tab rangeTab = new Tab("Date Range Report");
 
-      // sets the panes for each tab
-      farmTab.setContent(createFarmReportPane());
-      annualTab.setContent(createAnnualReportPane());
-      monthlyTab.setContent(createMonthlyReportPane());
-      
       // sets contents for date range report
+      // creates and formats controls for top
+      Label startLabel = new Label("Start Date:");
+      Label endLabel = new Label("End Date:");
+      DatePicker pickStart = new DatePicker();
+      DatePicker pickEnd = new DatePicker();
+      pickStart.setPrefWidth(comboWidth);
+      pickEnd.setPrefWidth(comboWidth);
+      Button enterButton = new Button("Enter");
+      HBox dateRange =
+            new HBox(10, startLabel, pickStart, endLabel, pickEnd, enterButton);
+      dateRange.setAlignment(Pos.CENTER);
+
+      // creates and formats center text
       Text rangeText = new Text("The date range report is currently "
             + "unimplemented.\nSorry for the inconvenience.");
       rangeText.setFont(header);
       rangeText.setTextAlignment(TextAlignment.CENTER);
-      BorderPane rangePane = new BorderPane(rangeText);
+
+      // creates and formats date range report pane
+      BorderPane rangePane =
+            new BorderPane(rangeText, dateRange, null, null, null);
+      rangePane.setPadding(new Insets(20, 10, 10, 10));
+
+      // sets the panes for each tab
+      farmTab.setContent(createFarmReportPane());
+      annualTab.setContent(createAnnualReportPane());
+      monthlyTab.setContent(createMonthlyReportPane());
       rangeTab.setContent(rangePane);
 
       // adds tabs to the TabPane
@@ -1045,7 +1063,7 @@ public class RunFinalProject extends Application {
       header = new Font(14);
       comboWidth = 100;
       inputFiles = null;
-      double fieldWidth = 100;
+      double fieldWidth = 85;
 
       // creates tabs
       Tab homeTab = new Tab("   Home   ");

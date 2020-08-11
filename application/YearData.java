@@ -32,9 +32,8 @@ import javafx.scene.layout.Region;
 class YearData {
 
    private ObservableList<MonthData> monthList; // list of months in the year
-   private int year;
-   private int numMonths;
-   private int totalYearWeight;
+   private int year; // year of this instance
+   private int totalYearWeight; // total weight for year
 
 
    /**
@@ -46,7 +45,6 @@ class YearData {
    YearData(File file, String[] yearMonth) {
       monthList = FXCollections.observableArrayList(); // creates new list
       year = Integer.parseInt(yearMonth[0]);
-      numMonths = 0;
       totalYearWeight = 0;
 
       addMonthData(file, yearMonth[1]); // adds month to the year
@@ -70,16 +68,6 @@ class YearData {
     */
    int getYear() {
       return year;
-   }
-
-
-   /**
-    * Returns how many months of data this year has.
-    * 
-    * @return The number of months in this year.
-    */
-   int getNumMonths() {
-      return numMonths;
    }
 
 
@@ -129,7 +117,6 @@ class YearData {
       monthList.add(newMonth);
 
       totalYearWeight += newMonth.getTotalMonthWeight();
-      numMonths++;
    }
 
 
@@ -141,7 +128,7 @@ class YearData {
     * @param file  The file of data.
     */
    void addToMonth(MonthData month, File file) {
-      try {
+      try { // tries to load file and read its lines
          Scanner reader = new Scanner(file);
          reader.nextLine(); // skips first line
          Boolean failed = false; // whether or not it failed to create a day
@@ -153,16 +140,13 @@ class YearData {
 
             try {
                // stores info from the line of the file
-               String stringDay = date.substring(date.lastIndexOf("-"));
-               int day = Integer.parseInt(stringDay);
-               
                String farmID = line[1].trim();
                int weight = Integer.parseInt(line[2]);
 
                if (farmID.equals("")) // filters out empty string
                   throw new Exception();
                
-               month.addDay(date, day, farmID, weight);
+               month.addDay(date, farmID, weight);
 
             } catch (Exception e) { // catches when data is not right
                failed = true;

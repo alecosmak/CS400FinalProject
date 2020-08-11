@@ -33,7 +33,6 @@ class MonthData {
 
    private ObservableList<DayData> dayList; // list of days in this month
    private Months month; // name of month it is from enum
-   private int numDays; // total days stored
    private int totalMonthWeight; // total weight for month
 
 
@@ -47,10 +46,9 @@ class MonthData {
    MonthData(File file, Months month) {
       dayList = FXCollections.observableArrayList(); // creates new list
       this.month = month;
-      numDays = 0;
       totalMonthWeight = 0;
 
-      try {
+      try { // tries to load file and read its lines
          Scanner reader = new Scanner(file);
          reader.nextLine(); // skips first line
          Boolean failed = false; // whether or not it failed to create a day
@@ -60,18 +58,15 @@ class MonthData {
             String[] line = reader.nextLine().split(","); // separates file line
             String date = line[0]; // gets date value
 
-            try {
+            try { // tries to add day
                // stores info from the line of the file
-               String stringDay = date.substring(date.lastIndexOf("-"));
-               int day = Integer.parseInt(stringDay);
-
                String farmID = line[1].trim();
                int weight = Integer.parseInt(line[2]);
 
                if (farmID.equals("")) // filters out empty string
                   throw new Exception();
 
-               addDay(date, day, farmID, weight);
+               addDay(date, farmID, weight);
 
             } catch (Exception e) { // catches when data is not right
                failed = true;
@@ -119,16 +114,6 @@ class MonthData {
 
 
    /**
-    * Returns the total number of DayData instances this month stores.
-    * 
-    * @return The number of days in this list.
-    */
-   int getNumDays() {
-      return numDays;
-   }
-
-
-   /**
     * Returns the sum of weights for all days in this month.
     * 
     * @return The total weight in this month.
@@ -142,22 +127,19 @@ class MonthData {
     * Adds a day's worth of data to the list.
     * 
     * @param date   The String of the complete date.
-    * @param day    The day in the month it is.
     * @param farmID The farm ID of the farm whose day data this is.
     * @param weight The weight sold on this day.
     */
-   void addDay(String date, int day, String farmID, int weight) {
-      DayData newDay = new DayData(date, day, farmID, weight);
+   void addDay(String date, String farmID, int weight) {
+      DayData newDay = new DayData(date, farmID, weight);
 
       if (contains(newDay)) { // checks if day already exists
          replaceDay(newDay);
          return;
       }
 
-      dayList.add(new DayData(date, day, farmID, weight));
-
+      dayList.add(new DayData(date, farmID, weight));
       totalMonthWeight += weight;
-      numDays++;
    }
 
 
